@@ -1,4 +1,4 @@
-1. Job runs every configured amount of minutes
+- Job runs every configured amount of minutes
 
 - Gets ```lastProcessedMessageTimeStamp``` from custom-object endpoint (container "commercetools-payment-to-order-processor")
 
@@ -30,7 +30,7 @@
 
 - Created order should have (defined by the configuration rules) ```orderNumber``` and order's ```paymentState``` equals ```PAID``` set. In case of type ```custom-object``` it should get current value from defined container and key, increment by one and then use it for order creation. In case of type ```payment``` it should get ```orderNumber``` from ```payment.custom.fields.reference``` value.
 
- Example configuration 1 (default):
+Example configuration 1 (default):
 ```
 {
 	"orderNumber": {
@@ -40,7 +40,7 @@
 }
 ```
 
- Example configuration 2:
+Example configuration 2:
 ```
 {
 	"orderNumber": {
