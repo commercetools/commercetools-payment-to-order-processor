@@ -16,6 +16,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
+		<commercetools-jvm-sdk.version>1.0.0</commercetools-jvm-sdk.version>
 	</properties>
 
 
@@ -36,12 +37,12 @@
 		<dependency>
 			<groupId>com.commercetools.sdk.jvm.core</groupId>
 			<artifactId>commercetools-java-client</artifactId>
-			<version>1.0.0</version>
+			<version>${commercetools-jvm-sdk.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.commercetools.sdk.jvm.core</groupId>
 			<artifactId>commercetools-models</artifactId>
-			<version>1.0.0</version>
+			<version>${commercetools-jvm-sdk.version}</version>
 		</dependency>
 	</dependencies>
 
