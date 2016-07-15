@@ -1,0 +1,27 @@
+{"properties": [
+  {
+    "name": "ctp.credentials.projectkey",
+    "type": "java.lang.String",
+    "description": "A description for 'ctp.credentials.projectkey'"
+  },
+  {
+    "name": "ctp.credentials.clientid",
+    "type": "java.lang.String",
+    "description": "A description for 'ctp.credentials.clientid'"
+  },
+  {
+    "name": "ctp.credentials.clientsecret",
+    "type": "java.lang.String",
+    "description": "A description for 'ctp.credentials.clientsecret'"
+  },
+  {
+    "name": "ctp.defaulttimeout",
+    "type": "java.lang.String",
+    "description": "A description for 'ctp.defaulttimeout'"
+  },
+  {
+    "name": "ctp.poller.messagetype",
+    "type": "java.lang.String",
+    "description": "A description for 'ctp.poller.messagetype'"
+  }
+]}
