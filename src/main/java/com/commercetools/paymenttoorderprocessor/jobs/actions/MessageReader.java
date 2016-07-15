@@ -1,5 +1,6 @@
 package com.commercetools.paymenttoorderprocessor.jobs.actions;
 
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -17,6 +18,8 @@ import com.commercetools.paymenttoorderprocessor.timestamp.TimeStamp;
 
 import io.sphere.sdk.client.BlockingSphereClient;
 import io.sphere.sdk.customobjects.CustomObject;
+import io.sphere.sdk.customobjects.CustomObjectDraft;
+import io.sphere.sdk.customobjects.commands.CustomObjectUpsertCommand;
 import io.sphere.sdk.customobjects.queries.CustomObjectQuery;
 import io.sphere.sdk.messages.Message;
 import io.sphere.sdk.messages.queries.MessageQuery;
@@ -27,6 +30,7 @@ public class MessageReader implements ItemReader<Message> {
     public static final Logger LOG = LoggerFactory.getLogger(MessageReader.class);
     
     private final String SERVICENAME = "commercetools-payment-to-order-processor";
+    private final String KEY = "lastUpdated";
     @Autowired
     private BlockingSphereClient client;
     
@@ -40,7 +44,8 @@ public class MessageReader implements ItemReader<Message> {
     private long offset = 0;
 
     private MessageQuery messageQuery;
-    private Optional<TimeStamp> lastTimestamp;
+    private Optional<CustomObject<TimeStamp>> lastTimestamp = Optional.empty();
+    private ZonedDateTime timeOfProcessedMessage;
     
     @Override
     public Message read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
@@ -63,15 +68,28 @@ public class MessageReader implements ItemReader<Message> {
         final List<CustomObject<TimeStamp>> results = result.getResults();
         if (results.isEmpty()) {
             LOG.warn("No LastProcessedMessage was found");
-            lastTimestamp = Optional.empty();
         }
         else {
-            lastTimestamp = Optional.of(results.get(0).getValue());
+            lastTimestamp = Optional.of(results.get(0));
         }
         wasTimeStampQueried = true;
     }
     
     private void setLastProcessedMessageTimeStamp() {
+        final CustomObjectDraft<TimeStamp> draft = createCustomObjectDraft();
+        final CustomObjectUpsertCommand<TimeStamp> updateCommad = CustomObjectUpsertCommand.of(draft);
+        client.executeBlocking(updateCommad);
+    }
+
+    private CustomObjectDraft<TimeStamp> createCustomObjectDraft() {
+        final TimeStamp timeStamp = new TimeStamp(timeOfProcessedMessage);
+        LOG.info("Writing Custom Object ".concat(timeOfProcessedMessage.toString()));
+        if (lastTimestamp.isPresent()) {
+            return CustomObjectDraft.ofVersionedUpdate(lastTimestamp.get(), timeStamp, TimeStamp.class);
+        }
+        else {
+            return CustomObjectDraft.ofUnversionedUpsert(SERVICENAME, KEY ,timeStamp, TimeStamp.class);
+        }
     }
 
     private Message getMessageFromList() {
@@ -80,6 +98,7 @@ public class MessageReader implements ItemReader<Message> {
             return null;
         }
         else{
+            timeOfProcessedMessage = messages.get(0).getLastModifiedAt();
             return messages.remove(0);
         }
     }
@@ -109,7 +128,7 @@ public class MessageReader implements ItemReader<Message> {
                 .withLimit(500);
         if (lastTimestamp.isPresent()) {
             messageQuery = messageQuery
-                    .plusPredicates(m -> m.lastModifiedAt().isGreaterThan(lastTimestamp.get().getLastTimeStamp().minusMinutes(2)));
+                    .plusPredicates(m -> m.lastModifiedAt().isGreaterThan(lastTimestamp.get().getValue().getLastTimeStamp().minusMinutes(2)));
         }
     }
 }
