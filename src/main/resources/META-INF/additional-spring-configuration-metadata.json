@@ -23,5 +23,10 @@
     "name": "ctp.poller.messagetype",
     "type": "java.lang.String",
     "description": "A description for 'ctp.poller.messagetype'"
+  },
+  {
+    "name": "ctp.this.servicename",
+    "type": "java.lang.String",
+    "description": "A description for 'ctp.this.servicename'"
   }
 ]}

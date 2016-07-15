@@ -24,7 +24,7 @@ public class TimeStampManagerImpl implements TimeStampManager {
     @Autowired
     BlockingSphereClient client;
 
-    @Value("${ctp.servicename}")
+    @Value("${ctp.this.servicename}")
     private String serviceName;
     private Optional<CustomObject<TimeStamp>> lastTimestamp = Optional.empty();
     private boolean wasTimeStampQueried = false;
