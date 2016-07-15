@@ -19,6 +19,90 @@
 		<commercetools-jvm-sdk.version>1.0.0</commercetools-jvm-sdk.version>
 	</properties>
 
+	<profiles>
+		<profile>
+			<id>docker</id>
+			<activation>
+				<property>
+					<name>buildDocker</name>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-resources-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>copy-resources</id>
+								<phase>package</phase>
+								<goals>
+									<goal>copy-resources</goal>
+								</goals>
+								<configuration>
+									<outputDirectory>${basedir}/target/dockerfile</outputDirectory>
+									<useDefaultDelimiters>false</useDefaultDelimiters>
+									<delimiters>
+										<delimiter>${*}</delimiter>
+									</delimiters>
+									<resources>
+										<resource>
+											<directory>${basedir}/src/docker/</directory>
+											<filtering>true</filtering>
+											<includes>
+												<include>Dockerfile</include>
+											</includes>
+										</resource>
+										<resource>
+											<directory>${basedir}/src/docker/</directory>
+											<filtering>false</filtering>
+											<excludes>
+												<exclude>Dockerfile</exclude>
+											</excludes>
+										</resource>
+										<resource>
+											<directory>${basedir}/target</directory>
+											<filtering>false</filtering>
+											<includes>
+												<includes>${project.build.finalName}.jar</includes>
+											</includes>
+										</resource>
+									</resources>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.jolokia</groupId>
+						<artifactId>docker-maven-plugin</artifactId>
+						<version>0.13.9</version>
+						<configuration>
+							<images>
+								<image>
+									<name>commercetools/payment-to-order-processor:${docker.image.tag}</name>
+									<build>
+										<assembly>
+											<dockerFileDir>${project.build.directory}/dockerfile</dockerFileDir>
+										</assembly>
+									</build>
+								</image>
+							</images>
+						</configuration>
+						<executions>
+							<execution>
+								<id>build-docker-image</id>
+								<phase>install</phase>
+								<goals>
+									<goal>build</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 	<dependencies>
 		<!-- spring boot -->
@@ -52,6 +136,11 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.jolokia</groupId>
+				<artifactId>docker-maven-plugin</artifactId>
+				<version>0.13.9</version>
 			</plugin>
 		</plugins>
 	</build>
