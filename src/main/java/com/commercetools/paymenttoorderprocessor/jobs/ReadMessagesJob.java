@@ -21,6 +21,7 @@ import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageWriter;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManagerImpl;
 
+import io.sphere.sdk.carts.Cart;
 import io.sphere.sdk.messages.Message;
 
 @Configuration
@@ -41,12 +42,13 @@ public class ReadMessagesJob {
     }
 
     @Bean
-    public ItemProcessor<Message, Message> processor() {
+    @DependsOn("blockingSphereClient")
+    public ItemProcessor<Message, Cart> processor() {
         return new MessageProcessor();
     }
 
     @Bean
-    public ItemWriter<Message> writer() {
+    public ItemWriter<Cart> writer() {
         return new MessageWriter();
     }
 
@@ -69,10 +71,10 @@ public class ReadMessagesJob {
 
     @Bean
     public Step loadMessages(ItemReader<Message> reader, 
-            ItemProcessor<Message, Message> processor,
-            ItemWriter<Message> writer) {
+            ItemProcessor<Message, Cart> processor,
+            ItemWriter<Cart> writer) {
         return steps.get(STEP_LOAD_MESSAGES)
-                .<Message, Message> chunk(1)
+                .<Message, Cart> chunk(1)
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)

@@ -19,6 +19,7 @@ import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
 import io.sphere.sdk.client.BlockingSphereClient;
 import io.sphere.sdk.messages.Message;
 import io.sphere.sdk.messages.queries.MessageQuery;
+import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 import io.sphere.sdk.queries.PagedQueryResult;
 
 public class MessageReader implements ItemReader<Message> {
@@ -55,7 +56,7 @@ public class MessageReader implements ItemReader<Message> {
         }
         else{
             timeStampManager.setActualProcessedMessageTimeStamp(messages.get(0).getLastModifiedAt());
-            return messages.remove(0);
+            return messages.remove(0).as(PaymentTransactionStateChangedMessage.class);
         }
     }
 
@@ -69,6 +70,7 @@ public class MessageReader implements ItemReader<Message> {
 
     
     private void queryPlatform(){
+        LOG.info("Query CTP for Messages");
         buildQuery();
         final PagedQueryResult<Message> result = client.executeBlocking(messageQuery);
         total = result.getTotal();
