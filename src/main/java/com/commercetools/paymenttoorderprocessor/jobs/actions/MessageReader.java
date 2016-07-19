@@ -8,9 +8,6 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemReader;
-import org.springframework.batch.item.NonTransientResourceException;
-import org.springframework.batch.item.ParseException;
-import org.springframework.batch.item.UnexpectedInputException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -43,7 +40,7 @@ public class MessageReader implements ItemReader<Message> {
     private MessageQuery messageQuery;
     
     @Override
-    public Message read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
+    public Message read() {
         if(isQueryNeeded()) {
             queryPlatform();
         }
@@ -76,6 +73,7 @@ public class MessageReader implements ItemReader<Message> {
         total = result.getTotal();
         offset = result.getOffset() + result.getCount();
         messages = result.getResults();
+        wasInitialQueried = true;
     }
     
     private void buildQuery(){

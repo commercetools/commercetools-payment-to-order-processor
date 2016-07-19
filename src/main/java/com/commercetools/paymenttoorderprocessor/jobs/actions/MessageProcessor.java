@@ -1,5 +1,8 @@
 package com.commercetools.paymenttoorderprocessor.jobs.actions;
 
+import java.util.Collections;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
@@ -26,7 +29,7 @@ public class MessageProcessor implements ItemProcessor<Message, Cart> {
     private Payment payment;
     
     @Override
-    public Cart process(Message message) throws Exception {
+    public Cart process(Message message) {
         LOG.info("Called MessageProcesser.process with parameter {}", message);
         if (message instanceof PaymentTransactionStateChangedMessage){
             this.message = (PaymentTransactionStateChangedMessage)message;
@@ -45,10 +48,20 @@ public class MessageProcessor implements ItemProcessor<Message, Cart> {
     }
 
     private void getCorrespondingPaymentAndCart() {
-        LOG.info("Query CTP for Payment with ID {}", message.getResource().getId());
-        final PaymentByIdGet paymentByIdGet = PaymentByIdGet.of(message.getResource().getId());
+        final String paymentId = message.getResource().getId();
+        LOG.info("Query CTP for Payment with ID {}", paymentId);
+        final PaymentByIdGet paymentByIdGet = PaymentByIdGet.of(paymentId);
         payment = client.executeBlocking(paymentByIdGet);
-        final CartQuery cartQuery = CartQuery.of().withPredicates(m -> m.paymentInfo().payments().isNotEmpty());
-        client.execute(cartQuery);
+        final CartQuery cartQuery = CartQuery.of()
+                .withPredicates(m -> m.paymentInfo().payments().isIn(Collections.singletonList(payment)));
+        List<Cart> results = client.executeBlocking(cartQuery).getResults();
+        if (results.isEmpty()){
+            cart = null;
+        }
+        else {
+            //assume one payment is not assinged to multipe carts
+            cart = results.get(0);
+        }
+        LOG.info("Got Payment {} and Cart {} from Query for Payment ID {}", payment, cart, paymentId);
     }
 }
