@@ -18,11 +18,13 @@ import org.springframework.context.annotation.DependsOn;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageProcessor;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageReader;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageWriter;
+import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager.PaymentCreationConfigurationManager;
+import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager.PaymentCreationConfigurationManagerImpl;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManagerImpl;
 
 import io.sphere.sdk.carts.Cart;
-import io.sphere.sdk.messages.Message;
+import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 
 @Configuration
 @EnableBatchProcessing
@@ -36,14 +38,14 @@ public class ReadMessagesJob {
     private StepBuilderFactory steps;
 
     @Bean
-    @DependsOn({"blockingSphereClient", "timeStampManager"})
-    public ItemReader<Message> reader() {
+    @DependsOn({"blockingSphereClient", "paymentCreationConfigurationManager"})
+    public ItemReader<PaymentTransactionStateChangedMessage> reader() {
         return new MessageReader();
     }
 
     @Bean
-    @DependsOn("blockingSphereClient")
-    public ItemProcessor<Message, Cart> processor() {
+    @DependsOn({"blockingSphereClient", "paymentCreationConfigurationManager"})
+    public ItemProcessor<PaymentTransactionStateChangedMessage, Cart> processor() {
         return new MessageProcessor();
     }
 
@@ -59,6 +61,11 @@ public class ReadMessagesJob {
     }
 
     @Bean
+    public PaymentCreationConfigurationManager paymentCreationConfigurationManager() {
+        return new PaymentCreationConfigurationManagerImpl();
+    }
+
+    @Bean
     @DependsOn("blockingSphereClient")
     public TimeStampManager timeStampManager() {
         return new TimeStampManagerImpl();
@@ -70,11 +77,11 @@ public class ReadMessagesJob {
     }
 
     @Bean
-    public Step loadMessages(ItemReader<Message> reader, 
-            ItemProcessor<Message, Cart> processor,
+    public Step loadMessages(ItemReader<PaymentTransactionStateChangedMessage> reader, 
+            ItemProcessor<PaymentTransactionStateChangedMessage, Cart> processor,
             ItemWriter<Cart> writer) {
         return steps.get(STEP_LOAD_MESSAGES)
-                .<Message, Cart> chunk(1)
+                .<PaymentTransactionStateChangedMessage, Cart> chunk(1)
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)

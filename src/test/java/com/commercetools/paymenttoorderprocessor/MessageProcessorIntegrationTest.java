@@ -24,6 +24,8 @@ import com.commercetools.paymenttoorderprocessor.fixtures.CartFixtures;
 import com.commercetools.paymenttoorderprocessor.fixtures.PaymentFixtures;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageProcessor;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageReader;
+import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager.PaymentCreationConfigurationManager;
+import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager.PaymentCreationConfigurationManagerImpl;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
 
 import io.sphere.sdk.carts.Cart;
@@ -75,6 +77,10 @@ public class MessageProcessorIntegrationTest extends IntegrationTest {
                 }
             };
         }
+        @Bean PaymentCreationConfigurationManager paymentCreationConfigurationManager() {
+            return new PaymentCreationConfigurationManagerImpl();
+        }
+        
         @Bean MessageReader messageReader() {
             return new MessageReader();
         }
@@ -118,7 +124,7 @@ public class MessageProcessorIntegrationTest extends IntegrationTest {
             
             LOG.debug("Preparation done");
             assertEventually(() -> {
-                Message message = messageReader.read();
+                PaymentTransactionStateChangedMessage message = messageReader.read();
                 LOG.debug("Read message {}", message);
                 assertThat(message).isNotNull();
                 LOG.debug("Testing for equal {} {}", message.getResource().getId(), payment.getId());

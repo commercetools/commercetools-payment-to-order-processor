@@ -19,7 +19,7 @@ import io.sphere.sdk.messages.queries.MessageQuery;
 import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 import io.sphere.sdk.queries.PagedQueryResult;
 
-public class MessageReader implements ItemReader<Message> {
+public class MessageReader implements ItemReader<PaymentTransactionStateChangedMessage> {
 
     public static final Logger LOG = LoggerFactory.getLogger(MessageReader.class);
     
@@ -40,14 +40,14 @@ public class MessageReader implements ItemReader<Message> {
     private MessageQuery messageQuery;
     
     @Override
-    public Message read() {
+    public PaymentTransactionStateChangedMessage read() {
         if(isQueryNeeded()) {
             queryPlatform();
         }
         return getMessageFromList();
     }
 
-    private Message getMessageFromList() {
+    private PaymentTransactionStateChangedMessage getMessageFromList() {
         if (messages.isEmpty()){
             return null;
         }

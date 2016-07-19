@@ -8,7 +8,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager.PaymentCreationConfigurationManager;
+
 import io.sphere.sdk.carts.Cart;
+import io.sphere.sdk.carts.CartState;
 import io.sphere.sdk.carts.queries.CartQuery;
 import io.sphere.sdk.client.BlockingSphereClient;
 import io.sphere.sdk.messages.Message;
@@ -18,22 +21,25 @@ import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 import io.sphere.sdk.payments.queries.PaymentByIdGet;
 
 
-public class MessageProcessor implements ItemProcessor<Message, Cart> {
+public class MessageProcessor implements ItemProcessor<PaymentTransactionStateChangedMessage, Cart> {
     public static final Logger LOG = LoggerFactory.getLogger(MessageProcessor.class);
     
     @Autowired
     private BlockingSphereClient client;
+    
+    @Autowired
+    private PaymentCreationConfigurationManager paymentCreationConfigurationManager;
     
     private Cart cart;
     private PaymentTransactionStateChangedMessage message;
     private Payment payment;
     
     @Override
-    public Cart process(Message message) {
+    public Cart process(PaymentTransactionStateChangedMessage message) {
         LOG.info("Called MessageProcesser.process with parameter {}", message);
-        if (message instanceof PaymentTransactionStateChangedMessage){
-            this.message = (PaymentTransactionStateChangedMessage)message;
-            setCartIfPaymentTransactionIsConfigured();
+        this.message = (PaymentTransactionStateChangedMessage)message;
+        getCartIfPaymentTransactionIsConfigured();
+        if(cart != null && cart.getCartState() != CartState.ORDERED) {
             return cart;
         }
         else {
@@ -41,8 +47,8 @@ public class MessageProcessor implements ItemProcessor<Message, Cart> {
         }
     }
 
-    private void setCartIfPaymentTransactionIsConfigured() {
-        if (TransactionState.SUCCESS.equals(message.getState())) {
+    private void getCartIfPaymentTransactionIsConfigured() {
+        if (paymentCreationConfigurationManager.doesTransactionStateMatchConfiguration(message)) {
             getCorrespondingPaymentAndCart();
         }
     }
@@ -59,7 +65,7 @@ public class MessageProcessor implements ItemProcessor<Message, Cart> {
             cart = null;
         }
         else {
-            //assume one payment is not assinged to multipe carts
+            //assume one payment is not assigned to multiple carts
             cart = results.get(0);
         }
         LOG.info("Got Payment {} and Cart {} from Query for Payment ID {}", payment, cart, paymentId);
