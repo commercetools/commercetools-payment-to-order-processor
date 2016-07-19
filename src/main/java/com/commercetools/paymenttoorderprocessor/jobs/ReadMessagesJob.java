@@ -38,7 +38,7 @@ public class ReadMessagesJob {
     private StepBuilderFactory steps;
 
     @Bean
-    @DependsOn({"blockingSphereClient", "paymentCreationConfigurationManager"})
+    @DependsOn({"blockingSphereClient", "timeStampManager"})
     public ItemReader<PaymentTransactionStateChangedMessage> reader() {
         return new MessageReader();
     }
