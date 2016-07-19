@@ -22,7 +22,6 @@ public class PaymentFixtures {
         final PaymentDraft paymentDraft = builderMapping.apply(PaymentDraftBuilder.of(EURO_20).build());
         final Payment payment = client.executeBlocking(PaymentCreateCommand.of(paymentDraft));
         final Payment paymentToDelete = op.apply(payment);
-        client.executeBlocking(PaymentDeleteCommand.of(paymentToDelete));
     }
     
     
