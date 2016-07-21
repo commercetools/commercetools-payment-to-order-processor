@@ -58,15 +58,20 @@ public class MessageProcessor implements ItemProcessor<PaymentTransactionStateCh
         LOG.info("Query CTP for Payment with ID {}", paymentId);
         final PaymentByIdGet paymentByIdGet = PaymentByIdGet.of(paymentId);
         payment = client.executeBlocking(paymentByIdGet);
-        final CartQuery cartQuery = CartQuery.of()
-                .withPredicates(m -> m.paymentInfo().payments().isIn(Collections.singletonList(payment)));
-        List<Cart> results = client.executeBlocking(cartQuery).getResults();
-        if (results.isEmpty()){
-            cart = null;
+        if (payment != null) {
+            final CartQuery cartQuery = CartQuery.of()
+                    .withPredicates(m -> m.paymentInfo().payments().isIn(Collections.singletonList(payment)));
+            List<Cart> results = client.executeBlocking(cartQuery).getResults();
+            if (results.isEmpty()){
+                cart = null;
+            }
+            else {
+                //assume one payment is not assigned to multiple carts
+                cart = results.get(0);
+            }
         }
         else {
-            //assume one payment is not assigned to multiple carts
-            cart = results.get(0);
+            cart = null;
         }
         LOG.info("Got Payment {} and Cart {} from Query for Payment ID {}", payment, cart, paymentId);
     }
