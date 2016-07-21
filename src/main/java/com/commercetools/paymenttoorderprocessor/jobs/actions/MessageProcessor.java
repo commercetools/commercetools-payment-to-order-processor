@@ -3,6 +3,8 @@ package com.commercetools.paymenttoorderprocessor.jobs.actions;
 import java.util.Collections;
 import java.util.List;
 
+import javax.money.MonetaryAmount;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
@@ -14,9 +16,8 @@ import io.sphere.sdk.carts.Cart;
 import io.sphere.sdk.carts.CartState;
 import io.sphere.sdk.carts.queries.CartQuery;
 import io.sphere.sdk.client.BlockingSphereClient;
-import io.sphere.sdk.messages.Message;
 import io.sphere.sdk.payments.Payment;
-import io.sphere.sdk.payments.TransactionState;
+import io.sphere.sdk.payments.Transaction;
 import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 import io.sphere.sdk.payments.queries.PaymentByIdGet;
 
@@ -33,17 +34,28 @@ public class MessageProcessor implements ItemProcessor<PaymentTransactionStateCh
     private Cart cart;
     private PaymentTransactionStateChangedMessage message;
     private Payment payment;
-    
+
     @Override
     public Cart process(PaymentTransactionStateChangedMessage message) {
         LOG.info("Called MessageProcesser.process with parameter {}", message);
         this.message = (PaymentTransactionStateChangedMessage)message;
         getCartIfPaymentTransactionIsConfigured();
-        if(cart != null && cart.getCartState() != CartState.ORDERED) {
+        if(isCartAmountEqualToTransaction()) {
             return cart;
         }
         else {
             return null;
+        }
+    }
+
+    private boolean isCartAmountEqualToTransaction() {
+        if (cart != null && cart.getCartState() != CartState.ORDERED) {
+            final MonetaryAmount cartAmount = cart.getTotalPrice();
+            final MonetaryAmount transactionAmount = payment.getTransactions().get(0).getAmount();
+            return (cartAmount.equals(transactionAmount));
+        }
+        else { 
+            return false;
         }
     }
 
