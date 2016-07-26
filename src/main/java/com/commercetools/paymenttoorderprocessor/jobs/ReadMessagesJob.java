@@ -26,6 +26,13 @@ import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManagerImpl;
 import io.sphere.sdk.carts.Cart;
 import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 
+
+/***
+ * Defines the structure of the Payment-To-Order-Processor.
+ * All is done in a single Spring Boot Batch Step.
+ * @author mht@dotsource.de
+ *
+ */
 @Configuration
 @EnableBatchProcessing
 public class ReadMessagesJob {
@@ -50,6 +57,7 @@ public class ReadMessagesJob {
     }
 
     @Bean
+    @DependsOn("httpClient")
     public ItemWriter<Cart> writer() {
         return new MessageWriter();
     }

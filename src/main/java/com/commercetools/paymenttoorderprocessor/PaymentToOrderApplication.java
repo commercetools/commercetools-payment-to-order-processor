@@ -9,8 +9,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 
 import io.sphere.sdk.client.BlockingSphereClient;
+import io.sphere.sdk.client.SphereAccessTokenSupplier;
 import io.sphere.sdk.client.SphereClient;
 import io.sphere.sdk.client.SphereClientFactory;
+import io.sphere.sdk.http.HttpClient;
 
 @Configuration
 @SpringBootApplication
@@ -20,10 +22,19 @@ public class PaymentToOrderApplication {
         SpringApplication.run(PaymentToOrderApplication.class, args).close();
     }
     
+    @Bean 
+    public HttpClient httpClient() {
+        return SphereClientFactory.of().createHttpClient();
+    }
+    
     @Bean
-    @DependsOn("shereClientConfiguration")
-    public BlockingSphereClient blockingSphereClient(ShereClientConfiguration config) {
-        final SphereClient sphereClient  = SphereClientFactory.of().createClient(config.getProjectKey(), config.getClientId(), config.getClientSecret());
+    @DependsOn({"shereClientConfiguration", "httpClient"})
+    public BlockingSphereClient blockingSphereClient(final ShereClientConfiguration config, final HttpClient httpClient) {
+        final io.sphere.sdk.client.SphereClientConfig clientConfig = io.sphere.sdk.client.SphereClientConfig.of(config.getProjectKey(), config.getClientId(), config.getClientSecret());
+        final SphereAccessTokenSupplier sphereAccessTokenSupplierWithAutoRefresh = SphereAccessTokenSupplier.ofAutoRefresh(clientConfig, httpClient, false);
+        //lightweight client
+        final SphereClient sphereClient = SphereClient.of(clientConfig, httpClient, sphereAccessTokenSupplierWithAutoRefresh);
+
         return BlockingSphereClient.of(sphereClient, config.getDefaultTimeout(), TimeUnit.MILLISECONDS);
     }
 }
