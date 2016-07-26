@@ -2,6 +2,7 @@ package com.commercetools.paymenttoorderprocessor.jobs.actions;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import javax.money.MonetaryAmount;
 
@@ -21,7 +22,11 @@ import io.sphere.sdk.payments.Transaction;
 import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 import io.sphere.sdk.payments.queries.PaymentByIdGet;
 
-
+/***
+ * Checks if PaymentTransactionStateChangedMessage and corresponding Cart is viable for creation of an Order
+ * @author mht@dotsource.de
+ *
+ */
 public class MessageProcessor implements ItemProcessor<PaymentTransactionStateChangedMessage, Cart> {
     public static final Logger LOG = LoggerFactory.getLogger(MessageProcessor.class);
     
@@ -38,7 +43,7 @@ public class MessageProcessor implements ItemProcessor<PaymentTransactionStateCh
     @Override
     public Cart process(PaymentTransactionStateChangedMessage message) {
         LOG.info("Called MessageProcesser.process with parameter {}", message);
-        this.message = (PaymentTransactionStateChangedMessage)message;
+        this.message = message;
         getCartIfPaymentTransactionIsConfigured();
         if(isCartAmountEqualToTransaction()) {
             return cart;
@@ -51,12 +56,11 @@ public class MessageProcessor implements ItemProcessor<PaymentTransactionStateCh
     private boolean isCartAmountEqualToTransaction() {
         if (cart != null && cart.getCartState() != CartState.ORDERED) {
             final MonetaryAmount cartAmount = cart.getTotalPrice();
-            final MonetaryAmount transactionAmount = payment.getTransactions().get(0).getAmount();
-            return (cartAmount.equals(transactionAmount));
+            final Optional<Transaction> transaction = payment
+                    .getTransactions().stream().filter(t -> t.getId().equals(message.getTransactionId())).findFirst();
+            return (cartAmount.equals(transaction.isPresent() ? transaction.get().getAmount() : null));
         }
-        else { 
-            return false;
-        }
+        return false;
     }
 
     private void getCartIfPaymentTransactionIsConfigured() {
