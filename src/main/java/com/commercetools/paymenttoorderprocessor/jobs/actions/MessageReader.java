@@ -44,7 +44,9 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
     private List<Message> messages = Collections.emptyList();
     private boolean wasInitialQueried = false;
     private long total;
-    private long offset = 0;
+    private long offset = 0L;
+    private final int RESULTSPERPAGE = 500;
+    private final int PAGEOVERLAP = 5;
 
     private MessageQuery messageQuery;
     
@@ -79,21 +81,24 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
         LOG.info("Query CTP for Messages");
         buildQuery();
         final PagedQueryResult<Message> result = client.executeBlocking(messageQuery);
-        total = result.getTotal();
-        offset = result.getOffset() + result.getCount();
+        //Get the total workload from first Query
+        if (!wasInitialQueried) {
+            total = result.getTotal();
+        }
+        //Due to nondeterministic ordering of messages with same timestamp we fetch next pages with overlap 
+        offset = result.getOffset() + RESULTSPERPAGE - PAGEOVERLAP;
         messages = result.getResults();
         wasInitialQueried = true;
     }
     
     
     //Due to eventual consistency messages could be created with a delay. Fetching several minutes prior last Timestamp
-    //TODO modify the query so that multiple queried pages are overlapping by 5
     private void buildQuery(){
         messageQuery = MessageQuery.of()
                 .withPredicates(m -> m.type().is(MESSAGETYPE))
                 .withSort(m -> m.lastModifiedAt().sort().asc())
                 .withOffset(offset)
-                .withLimit(500);
+                .withLimit(RESULTSPERPAGE);
         final Optional<ZonedDateTime> timestamp = timeStampManager.getLastProcessedMessageTimeStamp();
         if (timestamp.isPresent()) {
             messageQuery = messageQuery
