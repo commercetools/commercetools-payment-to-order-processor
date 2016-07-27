@@ -24,8 +24,8 @@ public class TimeStampManagerImpl implements TimeStampManager {
     @Autowired
     BlockingSphereClient client;
 
-    @Value("${ctp.this.servicename}")
-    private String serviceName;
+    @Value("${ctp.custom.object.containername}")
+    private String containerName;
     private Optional<CustomObject<TimeStamp>> lastTimestamp = Optional.empty();
     private boolean wasTimeStampQueried = false;
     private ZonedDateTime lastActualProcessedMessageTimeStamp;
@@ -50,14 +50,16 @@ public class TimeStampManagerImpl implements TimeStampManager {
 
     @Override
     public void persistLastProcessedMessageTimeStamp() {
-        final CustomObjectDraft<TimeStamp> draft = createCustomObjectDraft();
-        final CustomObjectUpsertCommand<TimeStamp> updateCommad = CustomObjectUpsertCommand.of(draft);
-        client.executeBlocking(updateCommad);
+        if (lastActualProcessedMessageTimeStamp != null) {
+            final CustomObjectDraft<TimeStamp> draft = createCustomObjectDraft();
+            final CustomObjectUpsertCommand<TimeStamp> updateCommad = CustomObjectUpsertCommand.of(draft);
+            client.executeBlocking(updateCommad);
+        }
     }
 
     private void queryTimeStamp() {
         final CustomObjectQuery<TimeStamp> customObjectQuery = CustomObjectQuery.of(TimeStamp.class)
-                .byContainer(serviceName);
+                .byContainer(containerName);
         final PagedQueryResult<CustomObject<TimeStamp>> result = client.executeBlocking(customObjectQuery);
         final List<CustomObject<TimeStamp>> results = result.getResults();
         if (results.isEmpty()) {
@@ -77,7 +79,7 @@ public class TimeStampManagerImpl implements TimeStampManager {
             return CustomObjectDraft.ofVersionedUpdate(lastTimestamp.get(), timeStamp, TimeStamp.class);
         }
         else {
-            return CustomObjectDraft.ofUnversionedUpsert(serviceName, KEY ,timeStamp, TimeStamp.class);
+            return CustomObjectDraft.ofUnversionedUpsert(containerName, KEY ,timeStamp, TimeStamp.class);
         }
     }
 }
