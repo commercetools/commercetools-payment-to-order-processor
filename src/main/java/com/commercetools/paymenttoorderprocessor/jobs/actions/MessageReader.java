@@ -19,6 +19,13 @@ import io.sphere.sdk.messages.queries.MessageQuery;
 import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 import io.sphere.sdk.queries.PagedQueryResult;
 
+/**
+ * Reads PaymentTransactionStateChangedMessages from the commercetools platform.
+ * To assure all messages are processed a Custom Object in the platform saves all message ids. 
+ * @author mht@dotsource.de
+ *
+ */
+
 public class MessageReader implements ItemReader<PaymentTransactionStateChangedMessage> {
 
     public static final Logger LOG = LoggerFactory.getLogger(MessageReader.class);
@@ -76,6 +83,10 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
         wasInitialQueried = true;
     }
     
+    
+    //Due to eventual consistency messages could be created with a delay. Fetching several minutes prior last Timestamp
+    //TODO modify the query so that multiple queried pages are overlapping by 5
+    //TODO make the Time Change
     private void buildQuery(){
         messageQuery = MessageQuery.of()
                 .withPredicates(m -> m.type().is(messageType))
