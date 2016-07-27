@@ -15,13 +15,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 
-import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageProcessor;
+import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
+import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManagerImpl;
+import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageFilter;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageReader;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageWriter;
 import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager.PaymentCreationConfigurationManager;
 import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager.PaymentCreationConfigurationManagerImpl;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManagerImpl;
+import com.commercetools.paymenttoorderprocessor.wrapper.CartAndMessage;
 
 import io.sphere.sdk.carts.Cart;
 import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
@@ -45,20 +48,20 @@ public class ReadMessagesJob {
     private StepBuilderFactory steps;
 
     @Bean
-    @DependsOn({"blockingSphereClient", "timeStampManager"})
+    @DependsOn({"blockingSphereClient", "timeStampManager", "messageProcessedManager"})
     public ItemReader<PaymentTransactionStateChangedMessage> reader() {
         return new MessageReader();
     }
 
     @Bean
-    @DependsOn({"blockingSphereClient", "paymentCreationConfigurationManager"})
-    public ItemProcessor<PaymentTransactionStateChangedMessage, Cart> processor() {
-        return new MessageProcessor();
+    @DependsOn({"blockingSphereClient", "paymentCreationConfigurationManager", "messageProcessedManager"})
+    public ItemProcessor<PaymentTransactionStateChangedMessage, CartAndMessage> processor() {
+        return new MessageFilter();
     }
 
     @Bean
-    @DependsOn("httpClient")
-    public ItemWriter<Cart> writer() {
+    @DependsOn({"httpClient", "messageProcessedManager"})
+    public ItemWriter<CartAndMessage> writer() {
         return new MessageWriter();
     }
 
@@ -66,6 +69,12 @@ public class ReadMessagesJob {
     @DependsOn("timeStampManager")
     public JobExecutionListener listener() {
         return new JobListener();
+    }
+
+    @Bean
+    @DependsOn("blockingSphereClient")
+    public MessageProcessedManager messageProcessedManager() {
+        return new MessageProcessedManagerImpl();
     }
 
     @Bean
@@ -86,10 +95,10 @@ public class ReadMessagesJob {
 
     @Bean
     public Step loadMessages(ItemReader<PaymentTransactionStateChangedMessage> reader, 
-            ItemProcessor<PaymentTransactionStateChangedMessage, Cart> processor,
-            ItemWriter<Cart> writer) {
+            ItemProcessor<PaymentTransactionStateChangedMessage, CartAndMessage> processor,
+            ItemWriter<CartAndMessage> writer) {
         return steps.get(STEP_LOAD_MESSAGES)
-                .<PaymentTransactionStateChangedMessage, Cart> chunk(1)
+                .<PaymentTransactionStateChangedMessage, CartAndMessage> chunk(1)
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)

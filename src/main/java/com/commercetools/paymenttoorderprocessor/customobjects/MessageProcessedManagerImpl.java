@@ -23,7 +23,7 @@ public class MessageProcessedManagerImpl implements MessageProcessedManager{
     @Autowired
     private BlockingSphereClient client;
 
-    @Value("${custom.object.containername}")
+    @Value("${ctp.custom.object.containername}")
     private String customObjectContainerName;
 
     private final static String PROCESSED = "processed";

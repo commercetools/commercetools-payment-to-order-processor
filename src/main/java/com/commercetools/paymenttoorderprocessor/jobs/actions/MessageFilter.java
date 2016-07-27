@@ -11,7 +11,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
 import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager.PaymentCreationConfigurationManager;
+import com.commercetools.paymenttoorderprocessor.wrapper.CartAndMessage;
 
 import io.sphere.sdk.carts.Cart;
 import io.sphere.sdk.carts.CartState;
@@ -27,11 +29,14 @@ import io.sphere.sdk.payments.queries.PaymentByIdGet;
  * @author mht@dotsource.de
  *
  */
-public class MessageFilter implements ItemProcessor<PaymentTransactionStateChangedMessage, Cart> {
+public class MessageFilter implements ItemProcessor<PaymentTransactionStateChangedMessage, CartAndMessage> {
     public static final Logger LOG = LoggerFactory.getLogger(MessageFilter.class);
     
     @Autowired
     private BlockingSphereClient client;
+    
+    @Autowired
+    private MessageProcessedManager messageProcessedManager;
     
     @Autowired
     private PaymentCreationConfigurationManager paymentCreationConfigurationManager;
@@ -41,14 +46,15 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
     private Payment payment;
 
     @Override
-    public Cart process(PaymentTransactionStateChangedMessage message) {
-        LOG.info("Called MessageProcesser.process with parameter {}", message);
+    public CartAndMessage process(PaymentTransactionStateChangedMessage message) {
+        LOG.debug("Called MessageFilter.process with parameter {}", message);
         this.message = message;
         getCartIfPaymentTransactionIsConfigured();
         if(isCartAmountEqualToTransaction()) {
-            return cart;
+            return new CartAndMessage(cart, message);
         }
         else {
+            messageProcessedManager.setMessageIsProcessed(message);
             return null;
         }
     }
@@ -71,7 +77,7 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
 
     private void getCorrespondingPaymentAndCart() {
         final String paymentId = message.getResource().getId();
-        LOG.info("Query CTP for Payment with ID {}", paymentId);
+        LOG.debug("Query CTP for Payment with ID {}", paymentId);
         final PaymentByIdGet paymentByIdGet = PaymentByIdGet.of(paymentId);
         payment = client.executeBlocking(paymentByIdGet);
         if (payment != null) {

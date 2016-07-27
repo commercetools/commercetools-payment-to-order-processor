@@ -14,6 +14,9 @@ import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
+import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
+import com.commercetools.paymenttoorderprocessor.wrapper.CartAndMessage;
+
 import io.sphere.sdk.carts.Cart;
 import io.sphere.sdk.http.HttpClient;
 import io.sphere.sdk.http.HttpHeaders;
@@ -30,7 +33,7 @@ import io.sphere.sdk.json.SphereJsonUtils;
  * @author mht@dotsource.de
  *
  */
-public class MessageWriter implements ItemWriter<Cart> {
+public class MessageWriter implements ItemWriter<CartAndMessage> {
     public static final Logger LOG = LoggerFactory.getLogger(MessageWriter.class);
 
     private static final String ENCRYPTIONALGORITHM = "Blowfish";
@@ -39,15 +42,19 @@ public class MessageWriter implements ItemWriter<Cart> {
     private String encryptionKey;
     @Value("${createorder.endpoint.url}")
     private String urlstring;
-    
+
+    @Autowired
+    private MessageProcessedManager messageProcessedManager;
+
     @Override
-    public void write(List<? extends Cart> items) throws Exception {
-        for (Cart item : items) {
+    public void write(List<? extends CartAndMessage> items) throws Exception {
+        for (CartAndMessage item : items) {
             sendRequestToCreateOrder(item);
         }
     }
 
-    private void sendRequestToCreateOrder(Cart cart) throws Exception {
+    private void sendRequestToCreateOrder(CartAndMessage cartAndMessage) throws Exception {
+        final Cart cart = cartAndMessage.getCart();
         final String body = SphereJsonUtils.toJsonString(cart);
         final String bodyEncrypt = encrypt(body);
         final List<NameValuePair> headerList = new ArrayList<NameValuePair>();
@@ -60,6 +67,7 @@ public class MessageWriter implements ItemWriter<Cart> {
         final Integer statusCode = httpResponse.getStatusCode();
         if (statusCode != 200) {
             LOG.warn("Got Http-StatusCode {} from CreateOrder Endpoint for Cart {}", statusCode, cart);
+            messageProcessedManager.setMessageIsProcessed(cartAndMessage.getMessage());
         }
     }
 
