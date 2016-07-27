@@ -27,8 +27,8 @@ import io.sphere.sdk.payments.queries.PaymentByIdGet;
  * @author mht@dotsource.de
  *
  */
-public class MessageProcessor implements ItemProcessor<PaymentTransactionStateChangedMessage, Cart> {
-    public static final Logger LOG = LoggerFactory.getLogger(MessageProcessor.class);
+public class MessageFilter implements ItemProcessor<PaymentTransactionStateChangedMessage, Cart> {
+    public static final Logger LOG = LoggerFactory.getLogger(MessageFilter.class);
     
     @Autowired
     private BlockingSphereClient client;
