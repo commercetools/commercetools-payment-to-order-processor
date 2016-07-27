@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +12,7 @@ import org.springframework.batch.item.ItemReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
+import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
 
 import io.sphere.sdk.client.BlockingSphereClient;
@@ -36,12 +38,15 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
     @Autowired
     private TimeStampManager timeStampManager;
 
+    @Autowired
+    private MessageProcessedManager messageProcessedManager;
+
     private final static String MESSAGETYPE = "PaymentTransactionStateChanged";
 
     @Value("${ctp.messagereader.minutesoverlapping}")
     private Integer minutesoverlapping;
 
-    private List<Message> messages = Collections.emptyList();
+    private List<PaymentTransactionStateChangedMessage> messages = Collections.emptyList();
     private boolean wasInitialQueried = false;
     private long total;
     private long offset = 0L;
@@ -53,7 +58,7 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
     @Override
     public PaymentTransactionStateChangedMessage read() {
         if(isQueryNeeded()) {
-            queryPlatform();
+            getUnprocessedMessagesFromPlatform();
         }
         return getMessageFromList();
     }
@@ -76,8 +81,16 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
         return (messages.isEmpty() && total > offset);
     }
 
+    private void getUnprocessedMessagesFromPlatform() {
+        final List<Message> result = queryPlatform();
+        messages =  result.stream()
+                .map(message -> message.as(PaymentTransactionStateChangedMessage.class))
+                .filter(message -> messageProcessedManager.isMessageUnprocessed(message))
+                .collect(Collectors.toList());
+    }
+
     
-    private void queryPlatform(){
+    private List<Message> queryPlatform(){
         LOG.info("Query CTP for Messages");
         buildQuery();
         final PagedQueryResult<Message> result = client.executeBlocking(messageQuery);
@@ -87,8 +100,8 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
         }
         //Due to nondeterministic ordering of messages with same timestamp we fetch next pages with overlap 
         offset = result.getOffset() + RESULTSPERPAGE - PAGEOVERLAP;
-        messages = result.getResults();
         wasInitialQueried = true;
+        return result.getResults();
     }
     
     
