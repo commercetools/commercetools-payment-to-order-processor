@@ -83,7 +83,7 @@ public class MessageReaderIntegrationTest extends IntegrationTest {
         public static PropertySourcesPlaceholderConfigurer properties() throws Exception {
             final PropertySourcesPlaceholderConfigurer pspc = new PropertySourcesPlaceholderConfigurer();
             Properties properties = new Properties();
-            properties.setProperty("ctp.poller.messagetype", "PaymentTransactionStateChanged");
+            properties.setProperty("ctp.messagereader.minutesoverlapping", "2");
 
             pspc.setProperties(properties);
             return pspc;

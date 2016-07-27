@@ -35,9 +35,11 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
     
     @Autowired
     private TimeStampManager timeStampManager;
-    
-    @Value("${ctp.poller.messagetype}")
-    private String messageType;
+
+    private final static String MESSAGETYPE = "PaymentTransactionStateChanged";
+
+    @Value("${ctp.messagereader.minutesoverlapping}")
+    private Integer minutesoverlapping;
 
     private List<Message> messages = Collections.emptyList();
     private boolean wasInitialQueried = false;
@@ -86,17 +88,16 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
     
     //Due to eventual consistency messages could be created with a delay. Fetching several minutes prior last Timestamp
     //TODO modify the query so that multiple queried pages are overlapping by 5
-    //TODO make the Time Change
     private void buildQuery(){
         messageQuery = MessageQuery.of()
-                .withPredicates(m -> m.type().is(messageType))
+                .withPredicates(m -> m.type().is(MESSAGETYPE))
                 .withSort(m -> m.lastModifiedAt().sort().asc())
                 .withOffset(offset)
                 .withLimit(500);
         final Optional<ZonedDateTime> timestamp = timeStampManager.getLastProcessedMessageTimeStamp();
         if (timestamp.isPresent()) {
             messageQuery = messageQuery
-                    .plusPredicates(m -> m.lastModifiedAt().isGreaterThan(timestamp.get().minusMinutes(2)));
+                    .plusPredicates(m -> m.lastModifiedAt().isGreaterThan(timestamp.get().minusMinutes(minutesoverlapping)));
         }
     }
 }
