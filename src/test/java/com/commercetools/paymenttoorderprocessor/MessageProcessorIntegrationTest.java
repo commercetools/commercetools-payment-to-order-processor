@@ -5,6 +5,8 @@ import static com.commercetools.paymenttoorderprocessor.fixtures.PaymentFixtures
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -20,9 +22,10 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
+import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
 import com.commercetools.paymenttoorderprocessor.fixtures.CartFixtures;
 import com.commercetools.paymenttoorderprocessor.fixtures.PaymentFixtures;
-import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageProcessor;
+import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageFilter;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageReader;
 import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager.PaymentCreationConfigurationManager;
 import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager.PaymentCreationConfigurationManagerImpl;
@@ -30,10 +33,12 @@ import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
 
 import io.sphere.sdk.carts.Cart;
 import io.sphere.sdk.carts.CartDraft;
+import io.sphere.sdk.carts.CustomLineItemDraft;
 import io.sphere.sdk.carts.commands.CartUpdateCommand;
 import io.sphere.sdk.carts.commands.updateactions.AddPayment;
 import io.sphere.sdk.client.BlockingSphereClient;
 import io.sphere.sdk.messages.Message;
+import io.sphere.sdk.models.LocalizedString;
 import io.sphere.sdk.payments.Payment;
 import io.sphere.sdk.payments.Transaction;
 import io.sphere.sdk.payments.TransactionDraft;
@@ -44,6 +49,9 @@ import io.sphere.sdk.payments.commands.PaymentUpdateCommand;
 import io.sphere.sdk.payments.commands.updateactions.AddTransaction;
 import io.sphere.sdk.payments.commands.updateactions.ChangeTransactionState;
 import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
+import io.sphere.sdk.queries.PagedQueryResult;
+import io.sphere.sdk.taxcategories.TaxCategory;
+import io.sphere.sdk.taxcategories.queries.TaxCategoryQuery;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(loader=AnnotationConfigContextLoader.class)
@@ -77,6 +85,23 @@ public class MessageProcessorIntegrationTest extends IntegrationTest {
                 }
             };
         }
+        @Bean
+        public MessageProcessedManager messageProcessedManager() {
+            return new MessageProcessedManager() {
+                
+                @Override
+                public void setMessageIsProcessed(Message message) {
+                    //not needed in test
+                }
+                
+                @Override
+                public boolean isMessageUnprocessed(Message message) {
+                    //get all messages
+                    return true;
+                }
+            };
+        }
+        
         @Bean PaymentCreationConfigurationManager paymentCreationConfigurationManager() {
             return new PaymentCreationConfigurationManagerImpl();
         }
@@ -85,15 +110,15 @@ public class MessageProcessorIntegrationTest extends IntegrationTest {
             return new MessageReader();
         }
         
-        @Bean MessageProcessor messageProcessor() {
-            return new MessageProcessor();
+        @Bean MessageFilter messageProcessor() {
+            return new MessageFilter();
         }
         
         @Bean
         public static PropertySourcesPlaceholderConfigurer properties() throws Exception {
             final PropertySourcesPlaceholderConfigurer pspc = new PropertySourcesPlaceholderConfigurer();
             Properties properties = new Properties();
-            properties.setProperty("ctp.poller.messagetype", "PaymentTransactionStateChanged");
+            properties.setProperty("ctp.messagereader.minutesoverlapping", "2");
 
             pspc.setProperties(properties);
             return pspc;
@@ -102,15 +127,19 @@ public class MessageProcessorIntegrationTest extends IntegrationTest {
     
     @Autowired
     private MessageReader messageReader;
-    
+
     @Autowired
-    private MessageProcessor messageProcessor;
-   
+    private MessageFilter messageProcessor;
+    
     @Test
     public void messageProcesserIntegrationTest() throws Exception {
         LOG.debug("Starting Test createOrderIntegrationTest");
         PaymentFixtures.withPayment(testClient(), payment -> {
-            final Cart cart = CartFixtures.createCart(testClient(), CartDraft.of(EUR));
+            final PagedQueryResult<TaxCategory> result = testClient().executeBlocking(TaxCategoryQuery.of().byName("standard"));
+            final List<TaxCategory> results = result.getResults();
+            assertThat(results).isNotEmpty();
+            final CustomLineItemDraft customLineItemDraft = CustomLineItemDraft.of(LocalizedString.ofEnglish("messageProcesserIntegrationTestCustomLineItem"), "Slug", EURO_20, results.get(0), 1L);
+            final Cart cart = CartFixtures.createCart(testClient(), CartDraft.of(EUR).withCustomLineItems(Collections.singletonList(customLineItemDraft)));
             final Cart cartWithPayment = testClient().executeBlocking(CartUpdateCommand.of(cart, AddPayment.of(payment)));
             
             final TransactionDraft transactionDraft = TransactionDraftBuilder.of(TransactionType.AUTHORIZATION, EURO_20).build();
@@ -129,11 +158,10 @@ public class MessageProcessorIntegrationTest extends IntegrationTest {
                 assertThat(message).isNotNull();
                 LOG.debug("Testing for equal {} {}", message.getResource().getId(), payment.getId());
                 assertThat(message.getResource().getId()).isEqualTo(payment.getId());
-                assertThat(message instanceof PaymentTransactionStateChangedMessage).isTrue();
-                assertThat(((PaymentTransactionStateChangedMessage)message).getState()).isEqualTo(TransactionState.SUCCESS);
+                assertThat(message.getState()).isEqualTo(TransactionState.SUCCESS);
                 LOG.debug("Message for Cart ProcessorTest OK");
                 
-                Cart cartToTest = messageProcessor.process(message);
+                Cart cartToTest = messageProcessor.process(message).getCart();
                 LOG.debug("Caught Cart {} from CTP", cartToTest);
                 assertThat(cartToTest).isNotNull();
                 assertThat(cartToTest.getId()).isEqualTo(cartWithPayment.getId());

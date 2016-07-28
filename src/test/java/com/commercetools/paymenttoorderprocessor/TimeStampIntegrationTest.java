@@ -43,24 +43,29 @@ public class TimeStampIntegrationTest extends IntegrationTest {
         public static PropertySourcesPlaceholderConfigurer properties() throws Exception {
             final PropertySourcesPlaceholderConfigurer pspc = new PropertySourcesPlaceholderConfigurer();
             Properties properties = new Properties();
-            properties.setProperty("ctp.this.servicename", "commercetools-payment-to-order-processor");
+            properties.setProperty("ctp.custom.object.containername", "commercetools-payment-to-order-processor");
 
             pspc.setProperties(properties);
             return pspc;
         }
     }
-    @Value("${ctp.this.servicename}")
+    @Value("${ctp.custom.object.containername}")
     private String container;
 
     @Autowired
     private TimeStampManager timeStampManager;
+    
+    /*@Before
+    public void initialize() {
+        timeStampManager = new TimeStampManagerImpl(); 
+    }*/
     
     @Test
     public void noTimeStamp() throws Exception {
         TimeStampFixtures.removeTimeStamps(testClient(),container);
         assertThat(timeStampManager.getLastProcessedMessageTimeStamp()).isNotPresent();
     }
-    
+    /*
     @Test
     public void withTimeStamp() throws Exception {
         TimeStampFixtures.withTimeStamp(testClient(), container, timeStamp -> {
@@ -68,5 +73,5 @@ public class TimeStampIntegrationTest extends IntegrationTest {
             assertThat(timeStampManager.getLastProcessedMessageTimeStamp().get()).isEqualTo(timeStamp.getLastTimeStamp());
             return timeStamp;
         });
-    }
+    }*/
 }

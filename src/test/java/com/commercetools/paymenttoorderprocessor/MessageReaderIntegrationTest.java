@@ -20,9 +20,11 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
+import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
+import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManagerImpl;
 import com.commercetools.paymenttoorderprocessor.fixtures.CartFixtures;
 import com.commercetools.paymenttoorderprocessor.fixtures.PaymentFixtures;
-import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageProcessor;
+import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageFilter;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageReader;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
 
@@ -71,11 +73,31 @@ public class MessageReaderIntegrationTest extends IntegrationTest {
                 
                 @Override
                 public Optional<ZonedDateTime> getLastProcessedMessageTimeStamp() {
+                    //just get Messages from last 2 minutes 
                     return Optional.of(ZonedDateTime.now().minusMinutes(2L));
                 }
             };
         }
-        @Bean MessageReader messageReader() {
+        
+        @Bean
+        public MessageProcessedManager messageProcessedManager() {
+            return new MessageProcessedManager() {
+                
+                @Override
+                public void setMessageIsProcessed(Message message) {
+                    //not needed in test
+                }
+                
+                @Override
+                public boolean isMessageUnprocessed(Message message) {
+                    //get all messages
+                    return true;
+                }
+            };
+        }
+        
+        @Bean
+        public MessageReader messageReader() {
             return new MessageReader();
         }
         
@@ -108,13 +130,13 @@ public class MessageReaderIntegrationTest extends IntegrationTest {
             
             LOG.debug("Preparation done");
             assertEventually(() -> {
-                Message message = messageReader.read();
+                PaymentTransactionStateChangedMessage message = messageReader.read();
                 LOG.debug("Read message {}", message);
                 assertThat(message).isNotNull();
                 LOG.debug("Testing for equal {} {}", message.getResource().getId(), payment.getId());
                 assertThat(message.getResource().getId()).isEqualTo(payment.getId());
-                assertThat(message instanceof PaymentTransactionStateChangedMessage).isTrue();
-                assertThat(((PaymentTransactionStateChangedMessage)message).getState()).isEqualTo(TransactionState.SUCCESS);
+                LOG.debug("Testing for equal {} {}", message.getState(), TransactionState.SUCCESS);
+                assertThat(message.getState()).isEqualTo(TransactionState.SUCCESS);
             });
             return paymentWithTransactionStateChange;
         });
