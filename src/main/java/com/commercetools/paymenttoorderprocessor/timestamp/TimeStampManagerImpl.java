@@ -20,6 +20,14 @@ public class TimeStampManagerImpl implements TimeStampManager {
 
     public static final Logger LOG = LoggerFactory.getLogger(TimeStampManagerImpl.class);
     
+    public TimeStampManagerImpl() {
+    };
+    //for Unittest
+    public TimeStampManagerImpl(final String containerName, final BlockingSphereClient client) {
+        this.containerName = containerName;
+        this.client = client;
+    }
+    
     private final String KEY = "lastUpdated";
     @Autowired
     BlockingSphereClient client;

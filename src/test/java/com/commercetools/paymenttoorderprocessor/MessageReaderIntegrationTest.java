@@ -1,39 +1,24 @@
 package com.commercetools.paymenttoorderprocessor;
 
 import static com.commercetools.paymenttoorderprocessor.fixtures.PaymentFixtures.EURO_20;
-import static com.commercetools.paymenttoorderprocessor.fixtures.PaymentFixtures.EUR;
 import static org.assertj.core.api.Assertions.assertThat;
-
-import java.time.ZonedDateTime;
-import java.util.Optional;
-import java.util.Properties;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
+import org.springframework.boot.test.ConfigFileApplicationContextInitializer;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
-import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
-import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManagerImpl;
-import com.commercetools.paymenttoorderprocessor.fixtures.CartFixtures;
 import com.commercetools.paymenttoorderprocessor.fixtures.PaymentFixtures;
-import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageFilter;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageReader;
-import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
+import com.commercetools.paymenttoorderprocessor.testconfiguration.BasicTestConfiguration;
+import com.commercetools.paymenttoorderprocessor.testconfiguration.ExtendedTestConfiguration;
+import com.commercetools.paymenttoorderprocessor.testconfiguration.ReaderTestConfiguration2;
 
-import io.sphere.sdk.carts.Cart;
-import io.sphere.sdk.carts.CartDraft;
-import io.sphere.sdk.carts.commands.CartUpdateCommand;
-import io.sphere.sdk.carts.commands.updateactions.AddPayment;
 import io.sphere.sdk.client.BlockingSphereClient;
-import io.sphere.sdk.messages.Message;
 import io.sphere.sdk.payments.Payment;
 import io.sphere.sdk.payments.Transaction;
 import io.sphere.sdk.payments.TransactionDraft;
@@ -46,71 +31,13 @@ import io.sphere.sdk.payments.commands.updateactions.ChangeTransactionState;
 import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(loader=AnnotationConfigContextLoader.class)
+@ContextConfiguration(classes = {BasicTestConfiguration.class, ExtendedTestConfiguration.class, ShereClientConfiguration.class, ReaderTestConfiguration2.class}, initializers = ConfigFileApplicationContextInitializer.class)
 public class MessageReaderIntegrationTest extends IntegrationTest {
 
     public static final Logger LOG = LoggerFactory.getLogger(MessageReaderIntegrationTest.class);
-    
-    @Configuration
-    public static class ContextConfiguration {
-        @Bean 
-        public BlockingSphereClient client() {
-            return testClient();
-        }
-        @Bean
-        public TimeStampManager timeStampManager() {
-            return new TimeStampManager() {
-                
-                @Override
-                public void setActualProcessedMessageTimeStamp(ZonedDateTime timeStamp) {
-                    //not needed in test
-                }
-                
-                @Override
-                public void persistLastProcessedMessageTimeStamp() {
-                    //not needed in test
-                }
-                
-                @Override
-                public Optional<ZonedDateTime> getLastProcessedMessageTimeStamp() {
-                    //just get Messages from last 2 minutes 
-                    return Optional.of(ZonedDateTime.now().minusMinutes(2L));
-                }
-            };
-        }
-        
-        @Bean
-        public MessageProcessedManager messageProcessedManager() {
-            return new MessageProcessedManager() {
-                
-                @Override
-                public void setMessageIsProcessed(Message message) {
-                    //not needed in test
-                }
-                
-                @Override
-                public boolean isMessageUnprocessed(Message message) {
-                    //get all messages
-                    return true;
-                }
-            };
-        }
-        
-        @Bean
-        public MessageReader messageReader() {
-            return new MessageReader();
-        }
-        
-        @Bean
-        public static PropertySourcesPlaceholderConfigurer properties() throws Exception {
-            final PropertySourcesPlaceholderConfigurer pspc = new PropertySourcesPlaceholderConfigurer();
-            Properties properties = new Properties();
-            properties.setProperty("ctp.messagereader.minutesoverlapping", "2");
 
-            pspc.setProperties(properties);
-            return pspc;
-        }
-    }
+    @Autowired
+    private BlockingSphereClient testClient;
 
     @Autowired
     private MessageReader messageReader;
@@ -118,15 +45,15 @@ public class MessageReaderIntegrationTest extends IntegrationTest {
     @Test
     public void messageReaderIntegrationTest()  throws Exception {
         LOG.debug("Starting Test createOrderIntegrationTest");
-        PaymentFixtures.withPayment(testClient(), payment-> {
+        PaymentFixtures.withPayment(testClient, payment-> {
             final TransactionDraft transactionDraft = TransactionDraftBuilder.of(TransactionType.AUTHORIZATION, EURO_20).build();
             final AddTransaction addTransaction = AddTransaction.of(transactionDraft);
-            final Payment paymentWithTransaction = testClient().executeBlocking(PaymentUpdateCommand.of(payment, addTransaction));
+            final Payment paymentWithTransaction = testClient.executeBlocking(PaymentUpdateCommand.of(payment, addTransaction));
             assertThat(paymentWithTransaction.getTransactions().get(0).getState()).isEqualTo(TransactionState.PENDING);
             
             final Transaction transaction = paymentWithTransaction.getTransactions().get(0);
             final ChangeTransactionState changeTransactionState = ChangeTransactionState.of(TransactionState.SUCCESS, transaction.getId());
-            final Payment paymentWithTransactionStateChange = testClient().executeBlocking(PaymentUpdateCommand.of(paymentWithTransaction, changeTransactionState));
+            final Payment paymentWithTransactionStateChange = testClient.executeBlocking(PaymentUpdateCommand.of(paymentWithTransaction, changeTransactionState));
             
             LOG.debug("Preparation done");
             assertEventually(() -> {

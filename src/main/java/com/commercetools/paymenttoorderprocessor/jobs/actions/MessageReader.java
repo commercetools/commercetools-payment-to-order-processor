@@ -57,6 +57,7 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
     
     @Override
     public PaymentTransactionStateChangedMessage read() {
+        LOG.debug("wasInitialQueried: {}", wasInitialQueried);
         if(isQueryNeeded()) {
             getUnprocessedMessagesFromPlatform();
         }
