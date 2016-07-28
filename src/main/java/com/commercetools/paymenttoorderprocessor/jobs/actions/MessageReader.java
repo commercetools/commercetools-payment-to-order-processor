@@ -69,7 +69,7 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
         }
         else{
             timeStampManager.setActualProcessedMessageTimeStamp(messages.get(0).getLastModifiedAt());
-            return messages.remove(0).as(PaymentTransactionStateChangedMessage.class);
+            return messages.remove(0);
         }
     }
 

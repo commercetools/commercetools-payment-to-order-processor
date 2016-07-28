@@ -59,7 +59,8 @@ public class TimeStampManagerImpl implements TimeStampManager {
 
     private void queryTimeStamp() {
         final CustomObjectQuery<TimeStamp> customObjectQuery = CustomObjectQuery.of(TimeStamp.class)
-                .byContainer(containerName);
+                .byContainer(containerName)
+                .plusPredicates(co -> co.key().is(KEY));
         final PagedQueryResult<CustomObject<TimeStamp>> result = client.executeBlocking(customObjectQuery);
         final List<CustomObject<TimeStamp>> results = result.getResults();
         if (results.isEmpty()) {
