@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
 import javax.money.MonetaryAmount;
 
 import org.slf4j.Logger;
@@ -40,61 +41,74 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
     
     @Autowired
     private PaymentCreationConfigurationManager paymentCreationConfigurationManager;
-    
-    private Cart cart;
-    private PaymentTransactionStateChangedMessage message;
-    private Payment payment;
 
     @Override
     public CartAndMessage process(PaymentTransactionStateChangedMessage message) {
         LOG.debug("Called MessageFilter.process with parameter {}", message);
-        this.message = message;
-        getCartIfPaymentTransactionIsConfigured();
-        if(isCartAmountEqualToTransaction()) {
-            return new CartAndMessage(cart, message);
+        if(paymentCreationConfigurationManager.doesTransactionStateMatchConfiguration(message)) {
+            final Payment payment = getCorrespondingPayment(message);
+            if (payment != null) {
+                final Optional<Cart> oCart = getCorrespondingCart(payment);
+                if (oCart.isPresent()){
+                    final Cart cart = oCart.get();
+                    if (cart.getCartState() != CartState.ORDERED){
+                        if(isCartAmountEqualToTransaction(cart, payment, message)) {
+                            return new CartAndMessage(cart, message);
+                        }
+                        else {
+                            LOG.warn("Cannot create Order for Cart {}. The transactionamout of Transaction {} does not match cart.", cart.getId(), message.getTransactionId());
+                            messageProcessedManager.setMessageIsProcessed(message);
+                        }
+                    }
+                    else {
+                        LOG.info("Cart {} is already orderd nothing to do.", cart.getId());
+                        messageProcessedManager.setMessageIsProcessed(message);
+                    }
+                }
+                else {
+                    LOG.warn("There is no cart connected to payment with id {}.", message.getResource().getId());
+                    messageProcessedManager.setMessageIsProcessed(message);
+                }
+            }
+            else {
+                LOG.warn("There is no payment in commercetools platform with id {}.", message.getResource().getId());
+                messageProcessedManager.setMessageIsProcessed(message);
+            }
         }
         else {
+            LOG.info("PaymentTransactionStateChangedMessage {} has not the correct Trasactionstate to be processed.", message.getId());
             messageProcessedManager.setMessageIsProcessed(message);
-            return null;
+        }
+        return null;
+    }
+
+    
+    private boolean isCartAmountEqualToTransaction(Cart cart, final Payment payment, PaymentTransactionStateChangedMessage message) {
+        final MonetaryAmount cartAmount = cart.getTotalPrice();
+        final Optional<Transaction> transaction = payment
+                .getTransactions().stream().filter(t -> t.getId().equals(message.getTransactionId())).findFirst();
+        return (cartAmount.equals(transaction.isPresent() ? transaction.get().getAmount() : null));
+    }
+
+    private Optional<Cart> getCorrespondingCart(final Payment payment) {
+        final CartQuery cartQuery = CartQuery.of()
+                .withPredicates(m -> m.paymentInfo().payments().isIn(Collections.singletonList(payment)));
+        List<Cart> results = client.executeBlocking(cartQuery).getResults();
+        if (results.isEmpty()){
+            return Optional.empty();
+        }
+        else {
+            //assume one payment is not assigned to multiple carts
+            assert results.size() == 1; 
+            return Optional.of(results.get(0));
         }
     }
 
-    private boolean isCartAmountEqualToTransaction() {
-        if (cart != null && cart.getCartState() != CartState.ORDERED) {
-            final MonetaryAmount cartAmount = cart.getTotalPrice();
-            final Optional<Transaction> transaction = payment
-                    .getTransactions().stream().filter(t -> t.getId().equals(message.getTransactionId())).findFirst();
-            return (cartAmount.equals(transaction.isPresent() ? transaction.get().getAmount() : null));
-        }
-        return false;
-    }
-
-    private void getCartIfPaymentTransactionIsConfigured() {
-        if (paymentCreationConfigurationManager.doesTransactionStateMatchConfiguration(message)) {
-            getCorrespondingPaymentAndCart();
-        }
-    }
-
-    private void getCorrespondingPaymentAndCart() {
+    @Nullable
+    private Payment getCorrespondingPayment(final PaymentTransactionStateChangedMessage message) {
         final String paymentId = message.getResource().getId();
         LOG.debug("Query CTP for Payment with ID {}", paymentId);
         final PaymentByIdGet paymentByIdGet = PaymentByIdGet.of(paymentId);
-        payment = client.executeBlocking(paymentByIdGet);
-        if (payment != null) {
-            final CartQuery cartQuery = CartQuery.of()
-                    .withPredicates(m -> m.paymentInfo().payments().isIn(Collections.singletonList(payment)));
-            List<Cart> results = client.executeBlocking(cartQuery).getResults();
-            if (results.isEmpty()){
-                cart = null;
-            }
-            else {
-                //assume one payment is not assigned to multiple carts
-                cart = results.get(0);
-            }
-        }
-        else {
-            cart = null;
-        }
-        LOG.info("Got Payment {} and Cart {} from Query for Payment ID {}", payment, cart, paymentId);
+        return client.executeBlocking(paymentByIdGet);
     }
 }
