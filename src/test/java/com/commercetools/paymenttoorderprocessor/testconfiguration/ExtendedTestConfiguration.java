@@ -36,6 +36,11 @@ public class ExtendedTestConfiguration {
                 //just get Messages from last 2 minutes 
                 return Optional.of(ZonedDateTime.now().minusMinutes(2L));
             }
+
+            @Override
+            public void processingMessageFailed() {
+                //not needed in test
+            }
         };
     }
     @Bean

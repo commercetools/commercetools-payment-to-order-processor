@@ -1,13 +1,18 @@
 package com.commercetools.paymenttoorderprocessor.jobs.actions;
 
 import java.io.UnsupportedEncodingException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.commons.codec.binary.Base64;
@@ -18,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
+import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
 import com.commercetools.paymenttoorderprocessor.wrapper.CartAndMessage;
 
 import io.sphere.sdk.carts.Cart;
@@ -51,6 +57,9 @@ public class OrderCreater implements ItemWriter<CartAndMessage> {
 
     @Autowired
     HttpClient httpClient;
+    
+    @Autowired
+    TimeStampManager timeStampManager;
 
     @Override
     public void write(List<? extends CartAndMessage> items) throws Exception {
@@ -74,16 +83,18 @@ public class OrderCreater implements ItemWriter<CartAndMessage> {
         try {
             httpResponse = httpClient.execute(httpRequest).toCompletableFuture().get(40000, TimeUnit.MILLISECONDS);
             if (httpResponse.hasSuccessResponseCode()) {
-                LOG.info("Successfully called Shop API to create Order for Message {}", cartAndMessage.getMessage().getId());
+                LOG.info("Successfully called Shop API to create Order for Message {} and Cart {}", cartAndMessage.getMessage().getId(), cart.getId());
                 messageProcessedManager.setMessageIsProcessed(cartAndMessage.getMessage());
             }
             else {
                 LOG.warn("Response Code from API was {}", httpResponse.getStatusCode());
-                LOG.info(new String(httpResponse.getResponseBody(), "UTF-8"));
+                messageProcessedManager.setMessageIsProcessed(cartAndMessage.getMessage());
             }
         }
         catch (InterruptedException | ExecutionException | TimeoutException e) {
             LOG.error("Caught exception {} while calling Shop URL {} to create Order from Cart {}", urlstring, cart.getId(), e.toString());
+            //HTTP-Exception. Retry next time
+            timeStampManager.processingMessageFailed();
         }
 
     }
@@ -96,8 +107,8 @@ public class OrderCreater implements ItemWriter<CartAndMessage> {
             cipher.init(Cipher.ENCRYPT_MODE, ks);
             byte[] encrypted = cipher.doFinal(value.getBytes());
             return Base64.encodeBase64String(encrypted);
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+            LOG.error("Encryption of http body failed. With Exception {}", e.toString());
         }
 
         return null;

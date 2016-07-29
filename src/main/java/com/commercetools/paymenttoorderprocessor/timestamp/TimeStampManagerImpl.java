@@ -16,6 +16,11 @@ import io.sphere.sdk.customobjects.commands.CustomObjectUpsertCommand;
 import io.sphere.sdk.customobjects.queries.CustomObjectQuery;
 import io.sphere.sdk.queries.PagedQueryResult;
 
+/**
+ * Handles (read and save) the Custom-Object TimeStamp in the commercetools platform.
+ * @author mht@dotsource.de
+ *
+ */
 public class TimeStampManagerImpl implements TimeStampManager {
 
     public static final Logger LOG = LoggerFactory.getLogger(TimeStampManagerImpl.class);
@@ -37,6 +42,7 @@ public class TimeStampManagerImpl implements TimeStampManager {
     private Optional<CustomObject<TimeStamp>> lastTimestamp = Optional.empty();
     private boolean wasTimeStampQueried = false;
     private ZonedDateTime lastActualProcessedMessageTimeStamp;
+    private boolean processingMessageFailed = false;
     
     @Override
     public Optional<ZonedDateTime> getLastProcessedMessageTimeStamp() {
@@ -53,7 +59,9 @@ public class TimeStampManagerImpl implements TimeStampManager {
 
     @Override
     public void setActualProcessedMessageTimeStamp(final ZonedDateTime timeStamp) {
-        this.lastActualProcessedMessageTimeStamp = timeStamp;
+        if (!processingMessageFailed) {
+            this.lastActualProcessedMessageTimeStamp = timeStamp;
+        }
     }
 
     @Override
@@ -63,6 +71,12 @@ public class TimeStampManagerImpl implements TimeStampManager {
             final CustomObjectUpsertCommand<TimeStamp> updateCommad = CustomObjectUpsertCommand.of(draft);
             client.executeBlocking(updateCommad);
         }
+        LOG.info("Could not update commercetools timestamp for lastprocessed Message, because no message was processed.");
+    }
+    
+    @Override
+    public void processingMessageFailed() {
+        processingMessageFailed = true;
     }
 
     private void queryTimeStamp() {
