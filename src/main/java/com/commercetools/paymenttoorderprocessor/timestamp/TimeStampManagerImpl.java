@@ -72,11 +72,11 @@ public class TimeStampManagerImpl implements TimeStampManager {
         final PagedQueryResult<CustomObject<TimeStamp>> result = client.executeBlocking(customObjectQuery);
         final List<CustomObject<TimeStamp>> results = result.getResults();
         if (results.isEmpty()) {
-            LOG.warn("No LastProcessedMessage was found");
+            LOG.warn("No Timestamp for last processed message for was found at commercetools platform. This should only happen on the first run.");
         }
         else {
             lastTimestamp = Optional.of(results.get(0));
-            LOG.info("Got LastProcessedMessageTimeStamp {} from CTP", lastTimestamp);
+            LOG.info("Got Timestamp {} from commercetools platform", lastTimestamp);
         }
         wasTimeStampQueried = true;
     }

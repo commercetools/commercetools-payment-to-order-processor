@@ -1,8 +1,11 @@
 package com.commercetools.paymenttoorderprocessor.jobs.actions;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
@@ -33,8 +36,8 @@ import io.sphere.sdk.json.SphereJsonUtils;
  * @author mht@dotsource.de
  *
  */
-public class MessageWriter implements ItemWriter<CartAndMessage> {
-    public static final Logger LOG = LoggerFactory.getLogger(MessageWriter.class);
+public class OrderCreater implements ItemWriter<CartAndMessage> {
+    public static final Logger LOG = LoggerFactory.getLogger(OrderCreater.class);
 
     private static final String ENCRYPTIONALGORITHM = "Blowfish";
 
@@ -46,6 +49,9 @@ public class MessageWriter implements ItemWriter<CartAndMessage> {
     @Autowired
     private MessageProcessedManager messageProcessedManager;
 
+    @Autowired
+    HttpClient httpClient;
+
     @Override
     public void write(List<? extends CartAndMessage> items) throws Exception {
         for (CartAndMessage item : items) {
@@ -53,8 +59,9 @@ public class MessageWriter implements ItemWriter<CartAndMessage> {
         }
     }
 
-    private void sendRequestToCreateOrder(CartAndMessage cartAndMessage) throws Exception {
+    private void sendRequestToCreateOrder(CartAndMessage cartAndMessage) throws UnsupportedEncodingException{
         final Cart cart = cartAndMessage.getCart();
+        LOG.info("Calling API to Create Order for Cart {}", cart);
         final String body = SphereJsonUtils.toJsonString(cart);
         final String bodyEncrypt = encrypt(body);
         final List<NameValuePair> headerList = new ArrayList<NameValuePair>();
@@ -63,16 +70,23 @@ public class MessageWriter implements ItemWriter<CartAndMessage> {
         final HttpHeaders httpHeader = HttpHeaders.of(headerList);
         final HttpRequestBody httpBody = StringHttpRequestBody.of(bodyEncrypt);
         final HttpRequest httpRequest = HttpRequest.of(HttpMethod.POST, urlstring, httpHeader, httpBody);
-        final HttpResponse httpResponse = httpClient.execute(httpRequest).toCompletableFuture().get(20000, TimeUnit.MILLISECONDS);
-        final Integer statusCode = httpResponse.getStatusCode();
-        if (statusCode != 200) {
-            LOG.warn("Got Http-StatusCode {} from CreateOrder Endpoint for Cart {}", statusCode, cart);
-            messageProcessedManager.setMessageIsProcessed(cartAndMessage.getMessage());
+        HttpResponse httpResponse;
+        try {
+            httpResponse = httpClient.execute(httpRequest).toCompletableFuture().get(40000, TimeUnit.MILLISECONDS);
+            if (httpResponse.hasSuccessResponseCode()) {
+                LOG.info("Successfully called Shop API to create Order for Message {}", cartAndMessage.getMessage().getId());
+                messageProcessedManager.setMessageIsProcessed(cartAndMessage.getMessage());
+            }
+            else {
+                LOG.warn("Response Code from API was {}", httpResponse.getStatusCode());
+                LOG.info(new String(httpResponse.getResponseBody(), "UTF-8"));
+            }
         }
-    }
+        catch (InterruptedException | ExecutionException | TimeoutException e) {
+            LOG.error("Caught exception {} while calling Shop URL {} to create Order from Cart {}", urlstring, cart.getId(), e.toString());
+        }
 
-    @Autowired
-    HttpClient httpClient;
+    }
 
     private String encrypt(String value) {
         try {

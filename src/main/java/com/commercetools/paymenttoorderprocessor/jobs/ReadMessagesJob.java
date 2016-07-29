@@ -19,7 +19,7 @@ import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedM
 import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManagerImpl;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageFilter;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageReader;
-import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageWriter;
+import com.commercetools.paymenttoorderprocessor.jobs.actions.OrderCreater;
 import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager.PaymentCreationConfigurationManager;
 import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager.PaymentCreationConfigurationManagerImpl;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
@@ -62,7 +62,7 @@ public class ReadMessagesJob {
     @Bean
     @DependsOn({"httpClient", "messageProcessedManager"})
     public ItemWriter<CartAndMessage> writer() {
-        return new MessageWriter();
+        return new OrderCreater();
     }
 
     @Bean
