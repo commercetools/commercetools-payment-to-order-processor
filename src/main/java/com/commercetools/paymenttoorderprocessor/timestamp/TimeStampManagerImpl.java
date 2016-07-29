@@ -71,7 +71,9 @@ public class TimeStampManagerImpl implements TimeStampManager {
             final CustomObjectUpsertCommand<TimeStamp> updateCommad = CustomObjectUpsertCommand.of(draft);
             client.executeBlocking(updateCommad);
         }
-        LOG.info("Could not update commercetools timestamp for lastprocessed Message, because no message was processed.");
+        else {
+            LOG.info("Could not update commercetools timestamp for lastprocessed Message, because no message was processed.");
+        }
     }
     
     @Override
