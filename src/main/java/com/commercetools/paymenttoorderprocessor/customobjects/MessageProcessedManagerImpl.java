@@ -2,6 +2,8 @@ package com.commercetools.paymenttoorderprocessor.customobjects;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -14,12 +16,14 @@ import io.sphere.sdk.messages.Message;
 import io.sphere.sdk.queries.PagedQueryResult;
 
 /**
- * Reads custom objects in commercetools platform and checks if Message was already processed.s
+ * Reads custom objects in commercetools platform and checks if Message was already processed.
  * @author mht@dotsource.de
  *
  */
 public class MessageProcessedManagerImpl implements MessageProcessedManager{
 
+    public static final Logger LOG = LoggerFactory.getLogger(MessageProcessedManagerImpl.class);
+    
     @Autowired
     private BlockingSphereClient client;
 
@@ -42,7 +46,7 @@ public class MessageProcessedManagerImpl implements MessageProcessedManager{
             //There should be can only be one Custom Object because Key/Container is unique
             assert(results.size() == 1);
             final CustomObject<String> customObject= results.get(0);
-            return PROCESSED.equals(customObject.getValue());
+            return !PROCESSED.equals(customObject.getValue());
         }
     }
 
