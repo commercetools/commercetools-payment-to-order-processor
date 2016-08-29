@@ -1,6 +1,5 @@
 package com.commercetools.paymenttoorderprocessor.jobs.actions;
 
-import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -42,10 +41,11 @@ import io.sphere.sdk.json.SphereJsonUtils;
  * @author mht@dotsource.de
  *
  */
-public class OrderCreater implements ItemWriter<CartAndMessage> {
-    public static final Logger LOG = LoggerFactory.getLogger(OrderCreater.class);
+public class OrderCreator implements ItemWriter<CartAndMessage> {
+    private static final Logger LOG = LoggerFactory.getLogger(OrderCreator.class);
 
     private static final String ENCRYPTIONALGORITHM = "Blowfish";
+    private static final int DEFAULTTIMEOUT = 40000;
 
     @Value("${createorder.encryptionkey}")
     private String encryptionKey;
@@ -62,17 +62,21 @@ public class OrderCreater implements ItemWriter<CartAndMessage> {
     TimeStampManager timeStampManager;
 
     @Override
-    public void write(List<? extends CartAndMessage> items) throws Exception {
+    public void write(List<? extends CartAndMessage> items) {
         for (CartAndMessage item : items) {
             sendRequestToCreateOrder(item);
         }
     }
 
-    private void sendRequestToCreateOrder(CartAndMessage cartAndMessage) throws UnsupportedEncodingException{
+    private void sendRequestToCreateOrder(CartAndMessage cartAndMessage) {
         final Cart cart = cartAndMessage.getCart();
-        LOG.info("Calling API to Create Order for Cart {}", cart);
         final String body = SphereJsonUtils.toJsonString(cart);
+        //encrypting cart
         final String bodyEncrypt = encrypt(body);
+        if (bodyEncrypt == null) {
+            timeStampManager.processingMessageFailed();
+            return;
+        }
         final List<NameValuePair> headerList = new ArrayList<NameValuePair>();
         headerList.add(NameValuePair.of(HttpHeaders.CONTENT_TYPE,"text/plain"));
         headerList.add(NameValuePair.of("Content-Length", String.valueOf(bodyEncrypt.length())));
@@ -81,9 +85,9 @@ public class OrderCreater implements ItemWriter<CartAndMessage> {
         final HttpRequest httpRequest = HttpRequest.of(HttpMethod.POST, urlstring, httpHeader, httpBody);
         HttpResponse httpResponse;
         try {
-            httpResponse = httpClient.execute(httpRequest).toCompletableFuture().get(40000, TimeUnit.MILLISECONDS);
+            //sending encrypted cart to API
+            httpResponse = httpClient.execute(httpRequest).toCompletableFuture().get(DEFAULTTIMEOUT, TimeUnit.MILLISECONDS);
             if (httpResponse.hasSuccessResponseCode()) {
-                LOG.info("Successfully called Shop API to create Order for Message {} and Cart {}", cartAndMessage.getMessage().getId(), cart.getId());
                 messageProcessedManager.setMessageIsProcessed(cartAndMessage.getMessage());
             }
             else {

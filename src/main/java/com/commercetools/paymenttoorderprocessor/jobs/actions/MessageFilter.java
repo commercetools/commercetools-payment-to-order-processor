@@ -31,7 +31,7 @@ import io.sphere.sdk.payments.queries.PaymentByIdGet;
  *
  */
 public class MessageFilter implements ItemProcessor<PaymentTransactionStateChangedMessage, CartAndMessage> {
-    public static final Logger LOG = LoggerFactory.getLogger(MessageFilter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MessageFilter.class);
     
     @Autowired
     private BlockingSphereClient client;
@@ -45,9 +45,9 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
     @Override
     public CartAndMessage process(PaymentTransactionStateChangedMessage message) {
         LOG.debug("Called MessageFilter.process with parameter {}", message);
-        if(paymentCreationConfigurationManager.doesTransactionStateMatchConfiguration(message)) {
-            final Payment payment = getCorrespondingPayment(message);
-            if (payment != null) {
+        final Payment payment = getCorrespondingPayment(message);
+        if (payment != null) {
+            if(paymentCreationConfigurationManager.doesTransactionStateMatchConfiguration(message, payment)) {
                 final Optional<Cart> oCart = getCorrespondingCart(payment);
                 if (oCart.isPresent()){
                     final Cart cart = oCart.get();
@@ -71,12 +71,12 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
                 }
             }
             else {
-                LOG.warn("There is no payment in commercetools platform with id {}.", message.getResource().getId());
+                LOG.info("PaymentTransactionStateChangedMessage {} has not the correct Trasactionstate to be processed.", message.getId());
                 messageProcessedManager.setMessageIsProcessed(message);
             }
         }
         else {
-            LOG.info("PaymentTransactionStateChangedMessage {} has not the correct Trasactionstate to be processed.", message.getId());
+            LOG.warn("There is no payment in commercetools platform with id {}.", message.getResource().getId());
             messageProcessedManager.setMessageIsProcessed(message);
         }
         return null;
