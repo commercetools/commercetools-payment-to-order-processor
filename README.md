@@ -1,4 +1,4 @@
-# commercetools-payment-to-order-processor
+# commercetools-payment-to-order-processor [![Build Status](https://travis-ci.org/commercetools/commercetools-payment-to-order-processor.svg?branch=master)](https://travis-ci.org/commercetools/commercetools-payment-to-order-processor)
 
 ## Goal of the service
 In general orders are created from carts by the frontend. For redirect payments like Credit card 3D Secure, Paypal or Sofortüberweisung front end is confronted with an issue that in some cases there is a valid payment but no order as user did not reach front end's success URL, which creates an order from current cart. One of the use cases would be lost internet connection or accidentally closed tab after successfully issued payment. Scheduled processor ensures that for every successful payment and valid cart an order is created. For details can be found in [requirements](https://github.com/commercetools/commercetools-payment-to-order-processor/blob/master/doc/REQUIREMENTS.MD) document.
@@ -7,8 +7,9 @@ The service polls `PaymentTransactionStateChanged` messages from the commercetoo
 If the PaymentTransaction matches the configured values and the TotalPrice of the Cart equals the amount of the transaction and is not already ordered then the service has to trigger the order generation.
 
 ## Creating the order
-This service does not creates orders itself because that would result in a duplicated implementation of order generation. In the shop and in this service. Therefore it just calls an URL with encrypted cart. 
+This service does not creates orders itself because that would result in a duplicated implementation of order generation. In the shop and in this service. Therefore it just calls an URL with encrypted cart.
 
+The shop needs to provide an URL that accepts post request with encrypted body. The encryption algorithm is `Blowfish` with `Base64` String encoding.
 ## Using this service
 Just start the docker container with required configuration (environment) variables set.
 ```
