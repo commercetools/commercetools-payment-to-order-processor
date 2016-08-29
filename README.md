@@ -41,7 +41,7 @@ export CREATEORDER_ENDPOINT_URL=https://localhost/createOrder
 Example part of a shell script:
 ```
 export CREATEORDER_CREATEORDERON=AUTHORIZATION,CHARGE
-export CTP_TIMEOUT_DEFAULT=30000
+export CTP_TIMEOUT=30000
 export CTP_MESSAGEREADER_MINUTESOVERLAPPING=2
 export CTP_CUSTOM_OBJECT_CONTAINERNAME=commercetools-payment-to-order-processor
 ```
@@ -51,8 +51,13 @@ export CTP_CUSTOM_OBJECT_CONTAINERNAME=commercetools-payment-to-order-processor
 The Integration Test needs credentials for the platform that are provided via OS env variables. One can use the following script.
 ```
 #!/bin/bash
-export IT_PROJECT_KEY=
-export IT_CLIENT_ID=
-export IT_CLIENT_SECRET=
+export CTP_CREDENTIALS_CLIENTID=
+export CTP_CREDENTIALS_CLIENTSECRET=
+export CTP_CREDENTIALS_PROJECTKEY=
 mvn clean test
+```
+
+## Create the docker file
+```
+mvn install -Dmaven.test.skip=true -Pdocker -Ddocker.image.tag=latest
 ```
