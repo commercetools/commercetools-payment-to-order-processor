@@ -32,6 +32,6 @@ public class IntegrationTest {
     }
     
     public static void assertEventually(final Runnable block) {
-        assertEventually(Duration.ofMinutes(1L), Duration.ofMillis(1000), block);
+        assertEventually(Duration.ofMinutes(4L), Duration.ofMillis(1000), block);
     }
 }
