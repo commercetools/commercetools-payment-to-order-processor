@@ -90,6 +90,11 @@ public class MessageProcessorIntegrationTest extends IntegrationTest {
             //final array so lambda can use it
             final PaymentTransactionStateChangedMessage[] message = new PaymentTransactionStateChangedMessage[1];
 
+            //Give Platform time to create messages
+            try {
+                Thread.sleep(10000L);
+            } catch (InterruptedException e) {
+            }
             //get the correct message to read
             assertEventually(() -> {
                 message[0] = messageReader.read();

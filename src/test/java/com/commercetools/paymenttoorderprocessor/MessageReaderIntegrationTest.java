@@ -65,6 +65,11 @@ public class MessageReaderIntegrationTest extends IntegrationTest {
             final ChangeTransactionState changeTransactionState = ChangeTransactionState.of(TransactionState.SUCCESS, transaction.getId());
             final Payment paymentWithTransactionStateChange = testClient.executeBlocking(PaymentUpdateCommand.of(paymentWithTransaction, changeTransactionState));
 
+            //Give Platform time to create messages
+            try {
+                Thread.sleep(10000L);
+            } catch (InterruptedException e) {
+            }
             //Check if the message will be read:
             assertEventually(() -> {
                 PaymentTransactionStateChangedMessage message = messageReader.read();
