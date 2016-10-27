@@ -4,6 +4,10 @@ jdk:
 - oraclejdk8
 services:
 - docker
+
+# temp for check
+script: mvn --version
+
 env:
   global:
   - MVN_VERSION=3.3.9
@@ -12,4 +16,4 @@ env:
 install:
 - wget --quiet http://apache.openmirror.de/maven/maven-3/${MVN_VERSION}/binaries/apache-maven-${MVN_VERSION}-bin.tar.gz
 - tar xvzf apache-maven-${MVN_VERSION}-bin.tar.gz
-script: ./apache-maven-${MVN_VERSION}/bin/mvn install -Pdocker -Ddocker.image.tag=${DOCKER_TAG}
+script: ./apache-maven-${MVN_VERSION}/bin/mvn install
