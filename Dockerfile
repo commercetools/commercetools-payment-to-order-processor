@@ -1,4 +1,4 @@
 FROM java:8
-COPY ${project.build.finalName}.jar /application.jar
+COPY target/payment-to-order-processor.jar /payment-to-order-processor.jar
 EXPOSE 8080
-CMD ["java", "-Xms16m", "-Xmx32m", "-jar", "/application.jar"]
+CMD ["java", "-Xms16m", "-Xmx32m", "-jar", "/payment-to-order-processor.jar"]
