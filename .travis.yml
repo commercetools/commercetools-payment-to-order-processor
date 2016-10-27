@@ -13,7 +13,9 @@ env:
   - MVN_VERSION=3.3.9
   - M2_HOME="$(pwd)/apache-maven-${MVN_VERSION}"
   - DOCKER_TAG=latest
-install:
-- wget --quiet http://apache.openmirror.de/maven/maven-3/${MVN_VERSION}/binaries/apache-maven-${MVN_VERSION}-bin.tar.gz
-- tar xvzf apache-maven-${MVN_VERSION}-bin.tar.gz
-script: ./apache-maven-${MVN_VERSION}/bin/mvn install
+
+# comment temp for check
+#install:
+#- wget --quiet http://apache.openmirror.de/maven/maven-3/${MVN_VERSION}/binaries/apache-maven-${MVN_VERSION}-bin.tar.gz
+#- tar xvzf apache-maven-${MVN_VERSION}-bin.tar.gz
+#script: ./apache-maven-${MVN_VERSION}/bin/mvn install
