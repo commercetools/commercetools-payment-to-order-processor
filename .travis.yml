@@ -5,6 +5,10 @@ jdk:
 services:
 - docker
 
+env:
+  global:
+  - COMMIT=${TRAVIS_COMMIT::8}
+
 script:
  - mvn --version
  - mvn verify || travis_terminate 1
