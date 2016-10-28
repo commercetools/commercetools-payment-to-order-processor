@@ -11,7 +11,6 @@ echo TRAVIS_TAG=$TRAVIS_TAG
 echo SHORT_COMMIT=$SHORT_COMMIT
 echo REPO=$REPO
 echo DOCKER_TAG=$DOCKER_TAG
-echo DOCKER_USERNAME=$DOCKER_USERNAME
 
 echo "Building Docker image using tag '${REPO}:${SHORT_COMMIT}'."
 docker build -t "${REPO}:${SHORT_COMMIT}" .
