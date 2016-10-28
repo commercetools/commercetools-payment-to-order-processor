@@ -5,10 +5,6 @@ jdk:
 services:
 - docker
 
-env:
- global:
-  - DOCKER_TAG=latest
-
 script:
  - mvn --version
  - mvn verify || travis_terminate 1
