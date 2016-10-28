@@ -6,9 +6,12 @@ export REPO="commercetools/commercetools-payment-to-order-processor"
 export DOCKER_TAG=`if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_PULL_REQUEST" = "false" ]; then echo "latest"; else echo ${TRAVIS_BRANCH/\//-} ; fi`
 
 # used for debugging the build, may be suppressed in production
+echo TRAVIS_BUILD_NUMBER=$TRAVIS_BUILD_NUMBER
+echo TRAVIS_TAG=$TRAVIS_TAG
+echo COMMIT=$COMMIT
 echo REPO=$REPO
 echo DOCKER_TAG=$DOCKER_TAG
-echo COMMIT=$COMMIT
+echo DOCKER_USERNAME=$DOCKER_USERNAME
 
 echo "Building Docker image using tag '${REPO}:${COMMIT}'."
 docker build -t "${REPO}:${COMMIT}" .
