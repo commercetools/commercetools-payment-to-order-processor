@@ -22,7 +22,7 @@
     <packaging>jar</packaging>
 
     <build>
-        <finalName>payment-to-order-processor</finalName>
+        <finalName>${project.artifactId}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
