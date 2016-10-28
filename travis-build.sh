@@ -2,7 +2,7 @@
 
 set -e
 
-export REPO="commercetools/commercetools-payment-to-order-processor"
+export REPO="sphereio/payment-to-order-processor"
 export DOCKER_TAG=`if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_PULL_REQUEST" = "false" ]; then echo "latest"; else echo ${TRAVIS_BRANCH/\//-} ; fi`
 
 # used for debugging the build, may be suppressed in production
