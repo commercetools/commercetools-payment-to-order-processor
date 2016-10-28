@@ -7,7 +7,7 @@ services:
 
 env:
   global:
-  - COMMIT=${TRAVIS_COMMIT::8}
+  - SHORT_COMMIT=${TRAVIS_COMMIT::8}
 
 script:
  - mvn --version
