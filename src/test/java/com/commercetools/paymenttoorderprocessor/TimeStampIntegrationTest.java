@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.ConfigFileApplicationContextInitializer;
+import org.springframework.boot.test.SpringApplicationContextLoader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
@@ -24,11 +25,13 @@ import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManagerImpl;
 import io.sphere.sdk.client.BlockingSphereClient;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {BasicTestConfiguration.class, TimeStampTestConfiguration.class, ShereClientConfiguration.class}, initializers = ConfigFileApplicationContextInitializer.class)
+@ContextConfiguration(classes = {BasicTestConfiguration.class, TimeStampTestConfiguration.class, ShereClientConfiguration.class},
+        initializers = ConfigFileApplicationContextInitializer.class,
+        loader = SpringApplicationContextLoader.class)
 public class TimeStampIntegrationTest extends IntegrationTest {
 
     public static final Logger LOG = LoggerFactory.getLogger(TimeStampIntegrationTest.class);
-    
+
     @Configuration
     public static class ContextConfiguration {
         @Bean
@@ -40,7 +43,7 @@ public class TimeStampIntegrationTest extends IntegrationTest {
     private String container;
 
     private TimeStampManager timeStampManager;
-    
+
     @Autowired
     private BlockingSphereClient testClient;
 
@@ -48,13 +51,13 @@ public class TimeStampIntegrationTest extends IntegrationTest {
     public void init() {
         timeStampManager = new TimeStampManagerImpl(container, testClient);
     }
-    
+
     @Test
     public void noTimeStamp() throws Exception {
         TimeStampFixtures.removeTimeStamps(testClient ,container);
         assertThat(timeStampManager.getLastProcessedMessageTimeStamp()).isNotPresent();
     }
-    
+
     @Test
     public void withTimeStamp() throws Exception {
         TimeStampFixtures.withTimeStamp(testClient, container, timeStamp -> {

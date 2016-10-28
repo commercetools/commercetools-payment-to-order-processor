@@ -5,10 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.ConfigFileApplicationContextInitializer;
+import org.springframework.boot.test.SpringApplicationContextLoader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
@@ -32,7 +31,9 @@ import io.sphere.sdk.payments.commands.updateactions.ChangeTransactionState;
 import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {BasicTestConfiguration.class, ExtendedTestConfiguration.class, ShereClientConfiguration.class, MessageReaderIntegrationTest.ContextConfiguration.class}, initializers = ConfigFileApplicationContextInitializer.class)
+@ContextConfiguration(classes = {BasicTestConfiguration.class, ExtendedTestConfiguration.class, ShereClientConfiguration.class, MessageReaderIntegrationTest.ContextConfiguration.class},
+        initializers = ConfigFileApplicationContextInitializer.class,
+        loader = SpringApplicationContextLoader.class)
 public class MessageReaderIntegrationTest extends IntegrationTest {
 
     //For each test we need own instance of messageReader because its not stateless
@@ -60,7 +61,7 @@ public class MessageReaderIntegrationTest extends IntegrationTest {
             final AddTransaction addTransaction = AddTransaction.of(transactionDraft);
             final Payment paymentWithTransaction = testClient.executeBlocking(PaymentUpdateCommand.of(payment, addTransaction));
             assertThat(paymentWithTransaction.getTransactions().get(0).getState()).isEqualTo(TransactionState.PENDING);
-            
+
             final Transaction transaction = paymentWithTransaction.getTransactions().get(0);
             final ChangeTransactionState changeTransactionState = ChangeTransactionState.of(TransactionState.SUCCESS, transaction.getId());
             final Payment paymentWithTransactionStateChange = testClient.executeBlocking(PaymentUpdateCommand.of(paymentWithTransaction, changeTransactionState));

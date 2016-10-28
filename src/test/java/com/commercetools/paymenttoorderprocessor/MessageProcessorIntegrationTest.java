@@ -28,6 +28,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.ConfigFileApplicationContextInitializer;
+import org.springframework.boot.test.SpringApplicationContextLoader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
@@ -41,7 +42,9 @@ import static com.commercetools.paymenttoorderprocessor.fixtures.PaymentFixtures
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {BasicTestConfiguration.class, ExtendedTestConfiguration.class, ShereClientConfiguration.class, MessageProcessorIntegrationTest.ContextConfiguration.class}, initializers = ConfigFileApplicationContextInitializer.class)
+@ContextConfiguration(classes = {BasicTestConfiguration.class, ExtendedTestConfiguration.class, ShereClientConfiguration.class, MessageProcessorIntegrationTest.ContextConfiguration.class},
+        initializers = ConfigFileApplicationContextInitializer.class,
+        loader = SpringApplicationContextLoader.class)
 public class MessageProcessorIntegrationTest extends IntegrationTest {
 
     @Autowired
@@ -58,10 +61,10 @@ public class MessageProcessorIntegrationTest extends IntegrationTest {
 
     @Autowired
     private MessageFilter messageProcessor;
-    
+
     @Autowired
     private BlockingSphereClient testClient;
-    
+
     @Test
     public void messageProcessorSuccess() throws Exception {
         PaymentFixtures.withPayment(testClient, payment -> {
@@ -76,13 +79,13 @@ public class MessageProcessorIntegrationTest extends IntegrationTest {
                     .withCustomLineItems(Collections.singletonList(customLineItemDraft))
                     .withShippingAddress(address));
             final Cart cartWithPayment = testClient.executeBlocking(CartUpdateCommand.of(cart, AddPayment.of(payment)));
-            
+
             final TransactionDraft transactionDraft = TransactionDraftBuilder.of(TransactionType.AUTHORIZATION, EURO_20).build();
             final AddTransaction addTransaction = AddTransaction.of(transactionDraft);
-            
+
             final Payment paymentWithTransaction = testClient.executeBlocking(PaymentUpdateCommand.of(payment, addTransaction));
             assertThat(paymentWithTransaction.getTransactions().get(0).getState()).isEqualTo(TransactionState.PENDING);
-            
+
             final Transaction transaction = paymentWithTransaction.getTransactions().get(0);
             final ChangeTransactionState changeTransactionState = ChangeTransactionState.of(TransactionState.SUCCESS, transaction.getId());
             final Payment paymentWithTransactionStateChange = testClient.executeBlocking(PaymentUpdateCommand.of(paymentWithTransaction, changeTransactionState));
