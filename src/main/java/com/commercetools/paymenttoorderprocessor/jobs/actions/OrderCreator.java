@@ -37,7 +37,7 @@ import io.sphere.sdk.http.StringHttpRequestBody;
 import io.sphere.sdk.json.SphereJsonUtils;
 
 /***
- * Calls configured OrderCreation-Endpoint and sends encrypted Cart Json as Body 
+ * Calls configured OrderCreation-Endpoint and sends encrypted Cart Json as Body
  * @author mht@dotsource.de
  *
  */
@@ -57,7 +57,7 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
 
     @Autowired
     HttpClient httpClient;
-    
+
     @Autowired
     TimeStampManager timeStampManager;
 
@@ -78,7 +78,7 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
             return;
         }
         final List<NameValuePair> headerList = new ArrayList<NameValuePair>();
-        headerList.add(NameValuePair.of(HttpHeaders.CONTENT_TYPE,"text/plain"));
+        headerList.add(NameValuePair.of(HttpHeaders.CONTENT_TYPE, "text/plain"));
         headerList.add(NameValuePair.of("Content-Length", String.valueOf(bodyEncrypt.length())));
         final HttpHeaders httpHeader = HttpHeaders.of(headerList);
         final HttpRequestBody httpBody = StringHttpRequestBody.of(bodyEncrypt);
@@ -89,13 +89,12 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
             httpResponse = httpClient.execute(httpRequest).toCompletableFuture().get(DEFAULTTIMEOUT, TimeUnit.MILLISECONDS);
             if (httpResponse.hasSuccessResponseCode()) {
                 messageProcessedManager.setMessageIsProcessed(cartAndMessage.getMessage());
+            } else {
+                LOG.warn("Response Code from API was {}, body: \"{}\"", httpResponse.getStatusCode(),
+                        httpResponse.getResponseBody());
+                timeStampManager.processingMessageFailed();
             }
-            else {
-                LOG.warn("Response Code from API was {}", httpResponse.getStatusCode());
-                messageProcessedManager.setMessageIsProcessed(cartAndMessage.getMessage());
-            }
-        }
-        catch (InterruptedException | ExecutionException | TimeoutException e) {
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
             LOG.error("Caught exception {} while calling Shop URL {} to create Order from Cart {}", urlstring, cart.getId(), e.toString());
             //HTTP-Exception. Retry next time
             timeStampManager.processingMessageFailed();
