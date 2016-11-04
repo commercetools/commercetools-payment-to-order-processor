@@ -10,6 +10,6 @@ env:
   - M2_HOME="$(pwd)/apache-maven-${MVN_VERSION}"
   - DOCKER_TAG=latest
 install:
-- wget --quiet http://apache.openmirror.de/maven/maven-3/${MVN_VERSION}/binaries/apache-maven-${MVN_VERSION}-bin.tar.gz
+- wget --quiet http://www-eu.apache.org/dist/maven/maven-3/${MVN_VERSION}/binaries/apache-maven-${MVN_VERSION}-bin.tar.gz
 - tar xvzf apache-maven-${MVN_VERSION}-bin.tar.gz
 script: ./apache-maven-${MVN_VERSION}/bin/mvn install -Pdocker -Ddocker.image.tag=${DOCKER_TAG}
