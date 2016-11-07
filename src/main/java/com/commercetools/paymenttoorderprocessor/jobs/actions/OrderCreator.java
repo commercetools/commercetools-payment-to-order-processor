@@ -22,6 +22,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -35,7 +36,6 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
     private static final Logger LOG = LoggerFactory.getLogger(OrderCreator.class);
 
     private static final String ENCRYPTIONALGORITHM = "Blowfish";
-    private static final int DEFAULTTIMEOUT = 40000;
 
     @Value("${createorder.encryptionkey}")
     private String encryptionKey;
@@ -51,6 +51,12 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
     @Autowired
     TimeStampManager timeStampManager;
 
+    /**
+     * Milliseconds to wait create order API response.
+     */
+    @Value("${ctp.createOrderApi.timeout:40000}")
+    private Integer createOrderTimeout;
+
     @Override
     public void write(List<? extends CartAndMessage> items) {
         for (CartAndMessage item : items) {
@@ -60,7 +66,7 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
 
     private void sendRequestToCreateOrder(CartAndMessage cartAndMessage) {
         final Cart cart = cartAndMessage.getCart();
-        final String body = SphereJsonUtils.toJsonString(cart);
+        final String body = SphereJsonUtils.toJsonString(cart.getId());
         //encrypting cart
         final String bodyEncrypt = encrypt(body);
         if (bodyEncrypt == null) {
@@ -76,15 +82,17 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
         HttpResponse httpResponse;
         try {
             //sending encrypted cart to API
-            httpResponse = httpClient.execute(httpRequest).toCompletableFuture().get(DEFAULTTIMEOUT, TimeUnit.MILLISECONDS);
+            httpResponse = httpClient.execute(httpRequest).toCompletableFuture()
+                    .get(createOrderTimeout, TimeUnit.MILLISECONDS);
+
             if (httpResponse.hasSuccessResponseCode()) {
                 messageProcessedManager.setMessageIsProcessed(cartAndMessage.getMessage());
+                LOG.info("Processed cart [{}], created order [{}]",
+                        cartAndMessage.getCart().getId(), getStringFromResponseBody(httpResponse.getResponseBody()));
             } else {
-                LOG.warn("Response Code from API was {}, response body: \"{}\"", httpResponse.getStatusCode(),
-                        httpResponse.getResponseBody());
-
-                // still has an issue on secondary run: message not processed twice, if failed first time!
                 timeStampManager.processingMessageFailed();
+                LOG.warn("Response Code from API was {}, response body: \"{}\"",
+                        httpResponse.getStatusCode(), getStringFromResponseBody(httpResponse.getResponseBody()));
             }
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             logErrorAndFailTimestamp(e, "HTTP", urlstring, cart);
@@ -122,5 +130,16 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
         }
 
         return null;
+    }
+
+    /**
+     * Converts {@code responseBody} byte array to String value
+     * @param responseBody value to convert
+     * @return converting result if {@code responseBody} exists, "<<empty>>" string value otherwise.
+     */
+    private static String getStringFromResponseBody(byte[] responseBody) {
+        return Optional.ofNullable(responseBody)
+                .map(String::new)
+                .orElse("<<empty>>");
     }
 }
