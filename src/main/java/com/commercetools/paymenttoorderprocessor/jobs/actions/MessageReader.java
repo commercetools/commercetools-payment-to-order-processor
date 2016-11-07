@@ -23,25 +23,25 @@ import io.sphere.sdk.queries.PagedQueryResult;
 
 /**
  * Reads PaymentTransactionStateChangedMessages from the commercetools platform.
- * To assure all messages are processed a Custom Object in the platform saves all message ids. 
+ * To assure all messages are processed a Custom Object in the platform saves all message ids.
  * @author mht@dotsource.de
  *
  */
 
 public class MessageReader implements ItemReader<PaymentTransactionStateChangedMessage> {
 
-    public static final Logger LOG = LoggerFactory.getLogger(MessageReader.class);
-    
+    private static final Logger LOG = LoggerFactory.getLogger(MessageReader.class);
+
     @Autowired
     private BlockingSphereClient client;
-    
+
     @Autowired
     private TimeStampManager timeStampManager;
 
     @Autowired
     private MessageProcessedManager messageProcessedManager;
 
-    private final static String MESSAGETYPE = "PaymentTransactionStateChanged";
+    private static final String MESSAGETYPE = "PaymentTransactionStateChanged";
 
     @Value("${ctp.messagereader.minutesoverlapping}")
     private Integer minutesOverlapping;
@@ -54,32 +54,27 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
     private final int PAGEOVERLAP = 5;
 
     private MessageQuery messageQuery;
-    
+
     @Override
     public PaymentTransactionStateChangedMessage read() {
         LOG.debug("wasInitialQueried: {}", wasInitialQueried);
-        if(isQueryNeeded()) {
+        if (isQueryNeeded()) {
             getUnprocessedMessagesFromPlatform();
         }
         return getMessageFromList();
     }
 
     private PaymentTransactionStateChangedMessage getMessageFromList() {
-        if (messages.isEmpty()){
+        if (messages.isEmpty()) {
             return null;
-        }
-        else{
+        } else {
             timeStampManager.setActualProcessedMessageTimeStamp(messages.get(0).getLastModifiedAt());
             return messages.remove(0);
         }
     }
 
     private boolean isQueryNeeded() {
-        if (!wasInitialQueried) {
-            return true;
-        }
-        
-        return (messages.isEmpty() && total > offset);
+        return !wasInitialQueried || (messages.isEmpty() && total > offset);
     }
 
     private void getUnprocessedMessagesFromPlatform() {
@@ -88,10 +83,12 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
                 .map(message -> message.as(PaymentTransactionStateChangedMessage.class))
                 .filter(message -> messageProcessedManager.isMessageUnprocessed(message))
                 .collect(Collectors.toList());
+
+        LOG.info("{} of {} messages are unprocessed", messages.size(), result.size());
     }
 
-    
-    private List<Message> queryPlatform(){
+
+    private List<Message> queryPlatform() {
         LOG.info("Query CTP for Messages");
         buildQuery();
         final PagedQueryResult<Message> result = client.executeBlocking(messageQuery);
@@ -100,15 +97,15 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
             total = result.getTotal();
             LOG.info("First Query returned {} results. This this the workload for the Job.", total);
         }
-        //Due to nondeterministic ordering of messages with same timestamp we fetch next pages with overlap 
+        //Due to nondeterministic ordering of messages with same timestamp we fetch next pages with overlap
         offset = result.getOffset() + RESULTSPERPAGE - PAGEOVERLAP;
         wasInitialQueried = true;
         return result.getResults();
     }
-    
-    
+
+
     //Due to eventual consistency messages could be created with a delay. Fetching several minutes prior last Timestamp
-    private void buildQuery(){
+    private void buildQuery() {
         messageQuery = MessageQuery.of()
                 .withPredicates(m -> m.type().is(MESSAGETYPE))
                 .withSort(m -> m.lastModifiedAt().sort().asc())
@@ -116,8 +113,8 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
                 .withLimit(RESULTSPERPAGE);
         final Optional<ZonedDateTime> timestamp = timeStampManager.getLastProcessedMessageTimeStamp();
         if (timestamp.isPresent()) {
-            messageQuery = messageQuery
-                    .plusPredicates(m -> m.lastModifiedAt().isGreaterThan(timestamp.get().minusMinutes(minutesOverlapping)));
+            messageQuery = messageQuery.plusPredicates(
+                    m -> m.lastModifiedAt().isGreaterThan(timestamp.get().minusMinutes(minutesOverlapping)));
         }
     }
 }
