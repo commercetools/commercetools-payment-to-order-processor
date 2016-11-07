@@ -1,0 +1,2 @@
+# this file is used as dev properties and has precedence over application.properties from the root of the resources
+/application.properties
