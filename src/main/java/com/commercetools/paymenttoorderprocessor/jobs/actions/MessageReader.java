@@ -44,7 +44,7 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
     private final static String MESSAGETYPE = "PaymentTransactionStateChanged";
 
     @Value("${ctp.messagereader.minutesoverlapping}")
-    private Integer minutesoverlapping;
+    private Integer minutesOverlapping;
 
     private List<PaymentTransactionStateChangedMessage> messages = Collections.emptyList();
     private boolean wasInitialQueried = false;
@@ -57,6 +57,7 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
     
     @Override
     public PaymentTransactionStateChangedMessage read() {
+        LOG.debug("wasInitialQueried: {}", wasInitialQueried);
         if(isQueryNeeded()) {
             getUnprocessedMessagesFromPlatform();
         }
@@ -69,7 +70,7 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
         }
         else{
             timeStampManager.setActualProcessedMessageTimeStamp(messages.get(0).getLastModifiedAt());
-            return messages.remove(0).as(PaymentTransactionStateChangedMessage.class);
+            return messages.remove(0);
         }
     }
 
@@ -97,6 +98,7 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
         //Get the total workload from first Query
         if (!wasInitialQueried) {
             total = result.getTotal();
+            LOG.info("First Query returned {} results. This this the workload for the Job.", total);
         }
         //Due to nondeterministic ordering of messages with same timestamp we fetch next pages with overlap 
         offset = result.getOffset() + RESULTSPERPAGE - PAGEOVERLAP;
@@ -115,7 +117,7 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
         final Optional<ZonedDateTime> timestamp = timeStampManager.getLastProcessedMessageTimeStamp();
         if (timestamp.isPresent()) {
             messageQuery = messageQuery
-                    .plusPredicates(m -> m.lastModifiedAt().isGreaterThan(timestamp.get().minusMinutes(minutesoverlapping)));
+                    .plusPredicates(m -> m.lastModifiedAt().isGreaterThan(timestamp.get().minusMinutes(minutesOverlapping)));
         }
     }
 }

@@ -23,7 +23,8 @@ public class TimeStampFixtures {
     }
     
     public static void removeTimeStamps(final BlockingSphereClient client, final String container) {
-        final List<CustomObject<TimeStamp>> results = client.executeBlocking(CustomObjectQuery.of(TimeStamp.class).byContainer(container)).getResults();
+        final List<CustomObject<TimeStamp>> results = client.executeBlocking(
+                CustomObjectQuery.of(TimeStamp.class).byContainer(container).plusPredicates(m->m.key().is("lastUpdated"))).getResults();
         for (CustomObject<TimeStamp> customObject : results) {
             client.executeBlocking(CustomObjectDeleteCommand.of(customObject, TimeStamp.class));
         }
