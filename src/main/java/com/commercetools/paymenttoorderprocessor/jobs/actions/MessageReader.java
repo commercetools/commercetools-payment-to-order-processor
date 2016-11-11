@@ -89,7 +89,7 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
 
 
     private List<Message> queryPlatform() {
-        LOG.info("Query CTP for Messages");
+        LOG.debug("Query CTP for Messages");
         buildQuery();
         final PagedQueryResult<Message> result = client.executeBlocking(messageQuery);
         //Get the total workload from first Query
