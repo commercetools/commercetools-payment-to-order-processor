@@ -87,7 +87,7 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
 
             if (httpResponse.hasSuccessResponseCode()) {
                 messageProcessedManager.setMessageIsProcessed(cartAndMessage.getMessage());
-                LOG.info("Processed cart [{}], created order [{}]",
+                LOG.info("Processed cart id=[{}], created order id=[{}]",
                         cartAndMessage.getCart().getId(), getStringFromResponseBody(httpResponse.getResponseBody()));
             } else {
                 timeStampManager.processingMessageFailed();
