@@ -67,7 +67,7 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
     private void sendRequestToCreateOrder(CartAndMessage cartAndMessage) {
         final Cart cart = cartAndMessage.getCart();
         final String body = SphereJsonUtils.toJsonString(cart.getId());
-        //encrypting cart
+
         final String bodyEncrypt = encrypt(body);
         if (bodyEncrypt == null) {
             timeStampManager.processingMessageFailed();
