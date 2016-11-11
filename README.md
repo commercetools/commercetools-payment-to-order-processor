@@ -61,6 +61,12 @@ mvn clean test
 For Travis CI use [build settings page](https://travis-ci.org/commercetools/commercetools-payment-to-order-processor/settings).
 
 ## Create the docker file
+Every succesfull build after push to the repo will create a docker image with the next tags (see `travis-build.sh`):
+  - `${REPO}:${SHORT_COMMIT}` (like _sphereio/payment-to-order-processor:234eba_)
+  - `$REPO:latest` if push is done to _master_ branch, otherwise `$REPO:${TRAVIS_BRANCH}` (like _sphereio/payment-to-order-processor:latest_ or _sphereio/payment-to-order-processor:development_)
+  - `$REPO:${TRAVIS_TAG}` if _$TRAVIS_TAG_ is set, e.g. git tag is pushed (like _sphereio/payment-to-order-processor:v1.0.0_ if git tag "v1.0.0" is pushed.
+
+
 `travis-build.sh` is used to build and deploy the docker images. 
 The only things you should provide are:
   - build application jar to `target/payment-to-order-processor.jar`. 
@@ -77,3 +83,4 @@ The only things you should provide are:
     which is used to be set in _.travis.yml_
     - the script will automatically assign image tags based on git branch, tag 
     and pull request values
+  - push to `master` to build _latest_ image, push git tag to build image with docker tag reflecting git tag.
