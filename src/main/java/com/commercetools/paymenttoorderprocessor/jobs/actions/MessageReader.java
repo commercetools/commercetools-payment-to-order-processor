@@ -84,7 +84,7 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
                 .filter(message -> messageProcessedManager.isMessageUnprocessed(message))
                 .collect(Collectors.toList());
 
-        LOG.info("{} of {} messages are unprocessed", messages.size(), result.size());
+        LOG.info("{} of {} messages on current page are unprocessed", messages.size(), result.size());
     }
 
 
