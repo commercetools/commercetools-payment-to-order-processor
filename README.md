@@ -47,9 +47,15 @@ export CTP_MESSAGEREADER_MINUTESOVERLAPPING=2
 export CTP_CUSTOM_OBJECT_CONTAINERNAME=commercetools-payment-to-order-processor
 ```
 
+# Build and release
+
+## Build
+For build `maven` tool is used. `mvn verify` usually is enough for final build, installing may be skipped.
+
 ## Run tests
 The Integration Test needs credentials for the platform that are provided via OS env variables. 
 One can use the following script.
+
 ```
 #!/bin/bash
 export IT_PROJECT_KEY=
@@ -60,8 +66,8 @@ mvn clean test
 
 For Travis CI use [build settings page](https://travis-ci.org/commercetools/commercetools-payment-to-order-processor/settings).
 
-## Docker and release process
-Following Docker containers are build after successful Travis CI build:
+## Docker image
+Following Docker containers are created after successful Travis CI build:
 
  - on _master_ commit - with tag `latest` and commit hash i.e.: `afd348f`
  - on other branches - with tag named by the branch name, i.e.: `development`
@@ -71,8 +77,6 @@ Following Docker containers are build after successful Travis CI build:
 The only things you should provide are:
   - build application jar to `target/payment-to-order-processor.jar`. 
     The project maven _pom.xml_ is setup like this by default. 
-    
-    `mvn verify` is enough, skip installing
   - keep _Dockerfile_ in the root of the project. 
   Setup _Dockerfile_ to use target jar from location mentioned in the step above.
   - setup `$DOCKER_USERNAME` and `$DOCKER_PASSWORD` variables in the 
