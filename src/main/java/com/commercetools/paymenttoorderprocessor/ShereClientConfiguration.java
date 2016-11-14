@@ -12,7 +12,7 @@ public class ShereClientConfiguration {
     private String clientSecret;
     @Value("${ctp.credentials.projectkey}")
     private String projectKey;
-    @Value("${ctp.timeout}")
+    @Value("${ctp.timeout:30000}")
     private Integer defaultTimeout;
 
     public String getClientId() {
@@ -29,5 +29,5 @@ public class ShereClientConfiguration {
     public Integer getDefaultTimeout() {
         return defaultTimeout;
     }
-    
+
 }

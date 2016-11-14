@@ -4,12 +4,12 @@ jdk:
 - oraclejdk8
 services:
 - docker
+
 env:
   global:
-  - MVN_VERSION=3.3.9
-  - M2_HOME="$(pwd)/apache-maven-${MVN_VERSION}"
-  - DOCKER_TAG=latest
-install:
-- wget --quiet http://www-eu.apache.org/dist/maven/maven-3/${MVN_VERSION}/binaries/apache-maven-${MVN_VERSION}-bin.tar.gz
-- tar xvzf apache-maven-${MVN_VERSION}-bin.tar.gz
-script: ./apache-maven-${MVN_VERSION}/bin/mvn install -Pdocker -Ddocker.image.tag=${DOCKER_TAG}
+  - SHORT_COMMIT=${TRAVIS_COMMIT::8}
+
+script:
+ - mvn --version
+ - mvn verify || travis_terminate 1
+ - ./travis-build.sh || travis_terminate 1

@@ -1,4 +1,4 @@
-# commercetools-payment-to-order-processor [![Build Status](https://travis-ci.org/commercetools/commercetools-payment-to-order-processor.svg?branch=master)](https://travis-ci.org/commercetools/commercetools-payment-to-order-processor)
+[![Build Status](https://travis-ci.org/commercetools/commercetools-payment-to-order-processor.svg?branch=dev-docker-build)](https://travis-ci.org/commercetools/commercetools-payment-to-order-processor)
 
 ## Goal of the service
 In general orders are created from carts by the frontend. For redirect payments like Credit card 3D Secure, Paypal or Sofortüberweisung front end is confronted with an issue that in some cases there is a valid payment but no order as user did not reach front end's success URL, which creates an order from current cart. One of the use cases would be lost internet connection or accidentally closed tab after successfully issued payment. Scheduled processor ensures that for every successful payment and valid cart an order is created. For details can be found in [requirements](https://github.com/commercetools/commercetools-payment-to-order-processor/blob/master/doc/REQUIREMENTS.MD) document.
@@ -47,18 +47,44 @@ export CTP_MESSAGEREADER_MINUTESOVERLAPPING=2
 export CTP_CUSTOM_OBJECT_CONTAINERNAME=commercetools-payment-to-order-processor
 ```
 
+# Build and release
+
+## Build
+For build `maven` tool is used. `mvn verify` usually is enough for final build, installing may be skipped.
 
 ## Run tests
-The Integration Test needs credentials for the platform that are provided via OS env variables. One can use the following script.
+The Integration Test needs credentials for the platform that are provided via OS env variables. 
+One can use the following script.
+
 ```
 #!/bin/bash
-export CTP_CREDENTIALS_CLIENTID=
-export CTP_CREDENTIALS_CLIENTSECRET=
-export CTP_CREDENTIALS_PROJECTKEY=
+export IT_PROJECT_KEY=
+export IT_CLIENT_ID=
+export IT_CLIENT_SECRET=
 mvn clean test
 ```
 
-## Create the docker file
-```
-mvn install -Dmaven.test.skip=true -Pdocker -Ddocker.image.tag=latest
-```
+For Travis CI use [build settings page](https://travis-ci.org/commercetools/commercetools-payment-to-order-processor/settings).
+
+## Docker image
+Following Docker containers are created after successful Travis CI build:
+
+ - on _master_ commit - with tag `latest` and commit hash i.e.: `afd348f`
+ - on other branches - with tag named by the branch name, i.e.: `development`
+ - on git tag creation - additionally to above tags will be added docker tag equal to git tag name, i.e.: `v1.0.0`
+
+`travis-build.sh` is used to build and deploy the docker images. 
+The only things you should provide are:
+  - build application jar to `target/payment-to-order-processor.jar`. 
+    The project maven _pom.xml_ is setup like this by default. 
+  - keep _Dockerfile_ in the root of the project. 
+  Setup _Dockerfile_ to use target jar from location mentioned in the step above.
+  - setup `$DOCKER_USERNAME` and `$DOCKER_PASSWORD` variables in the 
+  [travis build settings](https://travis-ci.org/commercetools/commercetools-payment-to-order-processor/settings) 
+  to deploy the new images to the hub.
+  - _travis-build.sh_ will be started from _.travis.yml_ after successful project build and test.
+    - the script requires `${SHORT_COMMIT}` environment variable, 
+    which is used to be set in _.travis.yml_
+    - the script will automatically assign image tags based on git branch, tag 
+    and pull request values
+  - push to `master` to build _latest_ image, push git tag to build image with docker tag reflecting git tag.

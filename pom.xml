@@ -1,160 +1,71 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.commercetools.payment-to-order-processor</groupId>
-	<artifactId>payment-to-order-processor</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.commercetools.payment-to-order-processor</groupId>
+    <artifactId>payment-to-order-processor</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
 
-	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>1.3.6.RELEASE</version>
-		<relativePath /> <!-- lookup parent from repository -->
-	</parent>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>1.4.2.RELEASE</version>
+        <relativePath /> <!-- lookup parent from repository -->
+    </parent>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<java.version>1.8</java.version>
-		<commercetools-jvm-sdk.version>1.3.0</commercetools-jvm-sdk.version>
-	</properties>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <java.version>1.8</java.version>
+        <commercetools-jvm-sdk.version>1.6.0</commercetools-jvm-sdk.version>
+    </properties>
 
-	<profiles>
-		<profile>
-			<id>docker</id>
-			<activation>
-				<property>
-					<name>buildDocker</name>
-				</property>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-resources-plugin</artifactId>
-						<executions>
-							<execution>
-								<id>copy-resources</id>
-								<phase>package</phase>
-								<goals>
-									<goal>copy-resources</goal>
-								</goals>
-								<configuration>
-									<outputDirectory>${basedir}/target/dockerfile</outputDirectory>
-									<useDefaultDelimiters>false</useDefaultDelimiters>
-									<delimiters>
-										<delimiter>${*}</delimiter>
-									</delimiters>
-									<resources>
-										<resource>
-											<directory>${basedir}/src/docker/</directory>
-											<filtering>true</filtering>
-											<includes>
-												<include>Dockerfile</include>
-											</includes>
-										</resource>
-										<resource>
-											<directory>${basedir}/src/docker/</directory>
-											<filtering>false</filtering>
-											<excludes>
-												<exclude>Dockerfile</exclude>
-											</excludes>
-										</resource>
-										<resource>
-											<directory>${basedir}/target</directory>
-											<filtering>false</filtering>
-											<includes>
-												<includes>${project.build.finalName}.jar</includes>
-											</includes>
-										</resource>
-									</resources>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
-					<plugin>
-						<groupId>org.jolokia</groupId>
-						<artifactId>docker-maven-plugin</artifactId>
-						<version>0.13.9</version>
-						<configuration>
-							<images>
-								<image>
-									<name>commercetools/payment-to-order-processor:${docker.image.tag}</name>
-									<build>
-										<assembly>
-											<dockerFileDir>${project.build.directory}/dockerfile</dockerFileDir>
-										</assembly>
-									</build>
-								</image>
-							</images>
-						</configuration>
-						<executions>
-							<execution>
-								<id>build-docker-image</id>
-								<phase>install</phase>
-								<goals>
-									<goal>build</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
+    <packaging>jar</packaging>
 
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 
-	<dependencies>
-		<!-- spring boot -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-batch</artifactId>
-		</dependency>
+    <dependencies>
+        <!-- spring boot -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-batch</artifactId>
+        </dependency>
 
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
+        <!-- commercetools jvm sdk -->
+        <dependency>
+            <groupId>com.commercetools.sdk.jvm.core</groupId>
+            <artifactId>commercetools-java-client</artifactId>
+            <version>${commercetools-jvm-sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.commercetools.sdk.jvm.core</groupId>
+            <artifactId>commercetools-models</artifactId>
+            <version>${commercetools-jvm-sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.9</version>
+        </dependency>
 
-		<!-- commercetools jvm sdk -->
-		<dependency>
-			<groupId>com.commercetools.sdk.jvm.core</groupId>
-			<artifactId>commercetools-java-client</artifactId>
-			<version>${commercetools-jvm-sdk.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.commercetools.sdk.jvm.core</groupId>
-			<artifactId>commercetools-models</artifactId>
-			<version>${commercetools-jvm-sdk.version}</version>
-		</dependency>
-		
-		<dependency>
-			<groupId>commons-codec</groupId>
-			<artifactId>commons-codec</artifactId>
-			<version>1.9</version>
-		</dependency>
-
-		<!-- for tests -->
-		<dependency>
-			<groupId>org.assertj</groupId>
-			<artifactId>assertj-core</artifactId>
-			<version>3.5.1</version>
-		</dependency>
-	</dependencies>
-
-
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>org.jolokia</groupId>
-				<artifactId>docker-maven-plugin</artifactId>
-				<version>0.13.9</version>
-			</plugin>
-		</plugins>
-	</build>
+        <!-- for tests -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>3.5.1</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 </project>
