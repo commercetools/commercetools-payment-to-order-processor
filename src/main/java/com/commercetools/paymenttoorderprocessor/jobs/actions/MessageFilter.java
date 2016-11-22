@@ -32,13 +32,13 @@ import io.sphere.sdk.payments.queries.PaymentByIdGet;
  */
 public class MessageFilter implements ItemProcessor<PaymentTransactionStateChangedMessage, CartAndMessage> {
     private static final Logger LOG = LoggerFactory.getLogger(MessageFilter.class);
-    
+
     @Autowired
     private BlockingSphereClient client;
-    
+
     @Autowired
     private MessageProcessedManager messageProcessedManager;
-    
+
     @Autowired
     private PaymentCreationConfigurationManager paymentCreationConfigurationManager;
 
@@ -71,7 +71,7 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
                 }
             }
             else {
-                LOG.info("PaymentTransactionStateChangedMessage {} has not the correct Trasactionstate to be processed.", message.getId());
+                LOG.warn("PaymentTransactionStateChangedMessage {} has not the correct Trasactionstate to be processed.", message.getId());
                 messageProcessedManager.setMessageIsProcessed(message);
             }
         }
@@ -82,7 +82,7 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
         return null;
     }
 
-    
+
     private boolean isCartAmountEqualToTransaction(Cart cart, final Payment payment, PaymentTransactionStateChangedMessage message) {
         final MonetaryAmount cartAmount = cart.getTotalPrice();
         final Optional<Transaction> transaction = payment
@@ -99,7 +99,7 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
         }
         else {
             //assume one payment is not assigned to multiple carts
-            assert results.size() == 1; 
+            assert results.size() == 1;
             return Optional.of(results.get(0));
         }
     }
