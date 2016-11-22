@@ -1,3 +1,18 @@
+- Create order API (called from `CREATEORDER_ENDPOINT_URL`) should be implemented as a GET service which accepts `encryptedCartId` query parameter with Blowfish encrypted cart id string, for instance:
+
+  ```
+  http://localhost:9000/API/order/createOrder?encryptedCartId=eDIeqi7seRTjdYRqm%2BOxy5Qcbc38dXaEgftHjQcr6M7HO125Tg%2BnUg%3D%3D
+  ```
+  
+  The API returns:
+  
+  | Case                                                 |  Http Status | Http Body       |
+  |------------------------------------------------------|--------------|-----------------|
+  | A new order for the cart succesfully created         | 200 (OK)     | String order id |
+  | The cart has ordered status and related order exists | 200 (OK)     | String order id |
+  | <ul><li>cart id can't be decrypted</li> <li>cart can't be found by id</li> <li>cart doesn't have associated orderNumber (in `paymentInfo.payment[i].customField.reference`)</li> <li>cart has status `ORDERED`, but the order is not found</li> <li>cart doesn't have valid payment (charged or authorised)</li> <li>order can't be created for any reason (unexpected errorP</li></ul> | 400(bad request) | String short error message |
+
+
 - Job runs every configured amount of minutes
 
 - Gets ```lastProcessedMessageTimeStamp``` from custom-object endpoint (container "commercetools-payment-to-order-processor")
