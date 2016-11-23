@@ -5,10 +5,7 @@ import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
 import com.commercetools.paymenttoorderprocessor.wrapper.CartAndMessage;
 import io.netty.handler.codec.http.QueryStringEncoder;
 import io.sphere.sdk.carts.Cart;
-import io.sphere.sdk.http.HttpClient;
-import io.sphere.sdk.http.HttpMethod;
-import io.sphere.sdk.http.HttpRequest;
-import io.sphere.sdk.http.HttpResponse;
+import io.sphere.sdk.http.*;
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +25,8 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import static org.apache.commons.lang3.StringUtils.isNoneEmpty;
 
 /***
  * Calls configured OrderCreation-Endpoint and sends encrypted Cart Json as Body
@@ -50,6 +49,13 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
      */
     @Value("${createorder.endpoint.url}")
     private String urlstring;
+
+    /**
+     * Optional basic HTTP authentication credentials if required by API endpoint {@code urlstring}.
+     * <p>Value format is: <b>login:password</b></p>
+     */
+    @Value("${createorder.endpoint.authentication:#{null}}")
+    private String authentication;
 
     @Autowired
     private MessageProcessedManager messageProcessedManager;
@@ -85,7 +91,14 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
         QueryStringEncoder queryStringEncoder = new QueryStringEncoder(urlstring);
         queryStringEncoder.addParam("encryptedCartId", encryptedCartId);
 
-        final HttpRequest httpRequest = HttpRequest.of(HttpMethod.GET, queryStringEncoder.toString());
+        HttpHeaders httpHeaders = HttpHeaders.empty();
+
+        if (isNoneEmpty(authentication)) {
+            String encoded = Base64.encodeBase64String(authentication.getBytes());
+            httpHeaders = httpHeaders.plus(HttpHeaders.AUTHORIZATION,  "Basic " + encoded);
+        }
+
+        final HttpRequest httpRequest = HttpRequest.of(HttpMethod.GET, queryStringEncoder.toString(), httpHeaders, null);
 
         HttpResponse httpResponse;
         try {
