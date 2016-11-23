@@ -67,11 +67,22 @@ mvn clean test
 For Travis CI use [build settings page](https://travis-ci.org/commercetools/commercetools-payment-to-order-processor/settings).
 
 ## Docker image
-Following Docker containers are created after successful Travis CI build:
-
- - on _master_ commit - with tag `latest` and commit hash i.e.: `afd348f`
- - on other branches - with tag named by the branch name, i.e.: `development`
- - on git tag creation - additionally to above tags will be added docker tag equal to git tag name, i.e.: `v1.0.0`
+Following Docker images (tags) are created after successful Travis CI build:
+ 
+ - on any commit - tags `travis-[build #]` and commit hash i.e.: `afd348f`
+ - on _master_ commit with PR - tag `latest`
+ - on other branches or master without PR - tag name `wip-` prefix (Work In Progress) followed by the branch name, i.e.: `wip-development`
+ - on git tag push - additionally to above tags will be added:
+    - docker tag equal to git tag name, i.e.: `v1.0.0`
+    - docker tag `production`
+    
+###Docker image tags table:
+    
+  | Commit                          | commit hash<br/>`travis-[build #]` | `latest` | `wip-[branch-name]` | git tag | `production` | 
+  |---------------------------------|:----------------------------------:|:--------:|:-------------------:|:-------:|:------------:|
+  | master + PR                     |        **+**                       |   **+**  |          -          |    -    |      -       |
+  | non-master or master without PR |        **+**                       |     -    |       **+**         |    -    |      -       |
+  | git tag                         |        **+**                       |     -    |          -          |  **+**  |     **+**    |
 
 `travis-build.sh` is used to build and deploy the docker images. 
 The only things you should provide are:

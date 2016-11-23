@@ -3,9 +3,12 @@ package com.commercetools.paymenttoorderprocessor.jobs.actions;
 import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
 import com.commercetools.paymenttoorderprocessor.wrapper.CartAndMessage;
+import io.netty.handler.codec.http.QueryStringEncoder;
 import io.sphere.sdk.carts.Cart;
-import io.sphere.sdk.http.*;
-import io.sphere.sdk.json.SphereJsonUtils;
+import io.sphere.sdk.http.HttpClient;
+import io.sphere.sdk.http.HttpMethod;
+import io.sphere.sdk.http.HttpRequest;
+import io.sphere.sdk.http.HttpResponse;
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +23,6 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -37,8 +39,15 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
 
     private static final String ENCRYPTIONALGORITHM = "Blowfish";
 
+    /**
+     * Must be exactly 16 characters for used {@link #ENCRYPTIONALGORITHM} == Blowfish method.
+     */
     @Value("${createorder.encryptionkey}")
     private String encryptionKey;
+
+    /**
+     * Must be without trailing slash.
+     */
     @Value("${createorder.endpoint.url}")
     private String urlstring;
 
@@ -66,19 +75,18 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
 
     private void sendRequestToCreateOrder(CartAndMessage cartAndMessage) {
         final Cart cart = cartAndMessage.getCart();
-        final String body = SphereJsonUtils.toJsonString(cart.getId());
 
-        final String bodyEncrypt = encrypt(body);
-        if (bodyEncrypt == null) {
+        final String encryptedCartId = encrypt(cart.getId());
+        if (encryptedCartId == null) {
             timeStampManager.processingMessageFailed();
             return;
         }
-        final List<NameValuePair> headerList = new ArrayList<NameValuePair>();
-        headerList.add(NameValuePair.of(HttpHeaders.CONTENT_TYPE, "text/plain"));
-        headerList.add(NameValuePair.of("Content-Length", String.valueOf(bodyEncrypt.length())));
-        final HttpHeaders httpHeader = HttpHeaders.of(headerList);
-        final HttpRequestBody httpBody = StringHttpRequestBody.of(bodyEncrypt);
-        final HttpRequest httpRequest = HttpRequest.of(HttpMethod.POST, urlstring, httpHeader, httpBody);
+
+        QueryStringEncoder queryStringEncoder = new QueryStringEncoder(urlstring);
+        queryStringEncoder.addParam("encryptedCartId", encryptedCartId);
+
+        final HttpRequest httpRequest = HttpRequest.of(HttpMethod.GET, queryStringEncoder.toString());
+
         HttpResponse httpResponse;
         try {
             //sending encrypted cart to API
