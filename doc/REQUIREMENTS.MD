@@ -10,7 +10,7 @@
   |------------------------------------------------------|--------------|-----------------|
   | A new order for the cart succesfully created         | 200 (OK)     | String order id |
   | The cart has ordered status and related order exists | 200 (OK)     | String order id |
-  | <ul><li>cart id can't be decrypted</li> <li>cart can't be found by id</li> <li>cart doesn't have associated orderNumber (in `paymentInfo.payment[i].customField.reference`)</li> <li>cart has status `ORDERED`, but the order is not found</li> <li>cart doesn't have valid payment (charged or authorised)</li> <li>order can't be created for any reason (unexpected errorP</li></ul> | 400(bad request) | String short error message |
+  | <ul><li>cart id can't be decrypted</li> <li>cart can't be found by id</li> <li>cart doesn't have associated orderNumber (in `paymentInfo.payment[i].customField.reference`)</li> <li>cart has status `ORDERED`, but the order is not found</li> <li>cart doesn't have valid payment (charged or authorised)</li> <li>order can't be created for any reason (unexpected error</li></ul> | 400(bad request) | String short error message |
 
 
 - Job runs every configured amount of minutes
