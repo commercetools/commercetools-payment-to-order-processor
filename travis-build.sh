@@ -5,7 +5,7 @@ set -e
 export REPO="sphereio/payment-to-order-processor"
 export PRODUCTION_TAG="production"
 
-export DOCKER_TAG=`if { [ "$TRAVIS_BRANCH" = "master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] } || [[ "$TRAVIS_TAG" ]]; then echo "latest"; else echo "wip-${TRAVIS_BRANCH//\//-}" ; fi`
+export DOCKER_TAG=`if [[ "$TRAVIS_BRANCH" = "master" && "$TRAVIS_PULL_REQUEST" = "false" ]] || [[ "$TRAVIS_TAG" ]]; then echo "latest"; else echo "wip-${TRAVIS_BRANCH//\//-}" ; fi`
 
 # used for debugging the build, may be suppressed in production
 echo TRAVIS_BUILD_NUMBER=$TRAVIS_BUILD_NUMBER
