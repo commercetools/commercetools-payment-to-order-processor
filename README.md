@@ -30,6 +30,7 @@ export CTP_CREDENTIALS_CLIENTSECRET=...
 export CTP_CREDENTIALS_PROJECTKEY=...
 export CREATEORDER_ENCRYPTIONKEY=YOUR_SECRET_ENCRYPTION_KEY
 export CREATEORDER_ENDPOINT_URL=https://localhost/createOrder
+export CREATEORDER_ENDPOINT_AUTHENTICATION=<username>:<password> (optional)
 ```
 
 ### Optional values
