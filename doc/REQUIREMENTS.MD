@@ -17,7 +17,7 @@ Create order API (called from `CREATEORDER_ENDPOINT_URL`) should be implemented 
   
     | Http Status     | Meaning                                                           | How to process                                                                                                      |
     |-----------------|-------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
-    | *201 (CREATED)* | A new order for the cart is successfully created                  | Mark the order as created and never call again                                                                      |
+    | *201 (CREATED)* | A new order for the cart has been successfully created            | Mark the order as created and never call again                                                                      |
     | *200 (OK)*      | The request is correct, but an order can't be created             | Mark the order as not processable and never call again                                                              |
     | *any other*     | An order can't be created for the request because of some reason. | Figure out the issue (for instance, review the logs of the shop) and retry later. Don't mark the order as processed |
     
@@ -32,7 +32,7 @@ Create order API (called from `CREATEORDER_ENDPOINT_URL`) should be implemented 
       </tr>
       <tr>
         <td rowspan='3' valign='middle'>200 (OK)</td>
-        <td>cart has status `ORDERED`</td>
+        <td>cart has status <i>ORDERED</i></td>
         <td>potentially concurrent modification issue - an action is not required</td>
       </tr>
       <tr>
@@ -53,7 +53,7 @@ Create order API (called from `CREATEORDER_ENDPOINT_URL`) should be implemented 
         <td>verify the cart fetching process</td>
       </tr>
       <tr>
-        <td>cart doesn't have an associated orderNumber (in `paymentInfo.payment[i].customField.reference`)</td>
+        <td>cart doesn't have an associated orderNumber (in <i>paymentInfo.payment[i].customField.reference</i>)</td>
         <td>verify the cart creation workflow</td>
       </tr>
       <tr>
