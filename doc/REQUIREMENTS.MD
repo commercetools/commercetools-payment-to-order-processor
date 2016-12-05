@@ -1,17 +1,68 @@
-- Create order API (called from `CREATEORDER_ENDPOINT_URL`) should be implemented as a GET service which accepts `encryptedCartId` query parameter with Blowfish encrypted cart id string, for instance:
+# Create Order API Requirements
+
+Create order API (called from `CREATEORDER_ENDPOINT_URL`) should be implemented as a GET service which accepts 
+`encryptedCartId` query parameter with Blowfish encrypted cart id string, for instance:
 
   ```
   http://localhost:9000/API/order/createOrder?encryptedCartId=eDIeqi7seRTjdYRqm%2BOxy5Qcbc38dXaEgftHjQcr6M7HO125Tg%2BnUg%3D%3D
   ```
   
-  The API returns:
-  
-  | Case                                                 |  Http Status | Http Body       |
-  |------------------------------------------------------|--------------|-----------------|
-  | A new order for the cart succesfully created         | 200 (OK)     | String order id |
-  | The cart has ordered status and related order exists | 200 (OK)     | String order id |
-  | <ul><li>cart id can't be decrypted</li> <li>cart can't be found by id</li> <li>cart doesn't have associated orderNumber (in `paymentInfo.payment[i].customField.reference`)</li> <li>cart has status `ORDERED`, but the order is not found</li> <li>cart doesn't have valid payment (charged or authorised)</li> <li>order can't be created for any reason (unexpected error</li></ul> | 400(bad request) | String short error message |
+## API HTTP response
 
+  - Response mime type is: **`application/json`**
+  
+  - Response body is an *optional* JSON value.
+  
+  - Response statuses: 
+  
+    | Http Status     | Meaning                                                           | How to process                                                                                                      |
+    |-----------------|-------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
+    | *201 (CREATED)* | A new order for the cart is successfully created                  | Mark the order as created and never call again                                                                      |
+    | *200 (OK)*      | The request is correct, but an order can't be created             | Mark the order as not processable and never call again                                                              |
+    | *any other*     | An order can't be created for the request because of some reason. | Figure out the issue (for instance, review the logs of the shop) and retry later. Don't mark the order as processed |
+    
+    As mentioned above, in all the cases the body is optional, but in a case of non-201 status it is recommended 
+    to describe the reason why the order hasn't been created. Expected issues are:
+
+    <table>
+      <tr>
+        <th>Http Status</th>
+        <th>Error description</th>
+        <th>Required action</th>
+      </tr>
+      <tr>
+        <td rowspan='3' valign='middle'>200 (OK)</td>
+        <td>cart has status `ORDERED`</td>
+        <td>potentially concurrent modification issue - an action is not required</td>
+      </tr>
+      <tr>
+        <td>cart doesn't have a valid payment (charged or authorised)</td>
+        <td>unexpected state, should be investigated independently for each case</td>
+      </tr>
+      <tr>
+        <td>cart payment is revoked (cancelled or refunded)</td>
+        <td>no special action required</td>
+      </tr>
+      <tr>
+        <td rowspan='4' valign='middle'>not 200 or 201</td>
+        <td>cart id can't be decrypted</td>
+        <td>verify encryption keys and methods</td>
+      </tr>
+      <tr>
+        <td>cart can't be found by id</td>
+        <td>verify the cart fetching process</td>
+      </tr>
+      <tr>
+        <td>cart doesn't have an associated orderNumber (in `paymentInfo.payment[i].customField.reference`)</td>
+        <td>verify the cart creation workflow</td>
+      </tr>
+      <tr>
+        <td>any other reason</td>
+        <td>&nbsp;</td>
+      </tr>
+    </table>
+
+## Processor Workflow
 
 - Job runs every configured amount of minutes
 
@@ -40,8 +91,21 @@
 }
 ```
 
-- For each message with state value ```Success``` and TransactionType (http://dev.commercetools.com/http-api-projects-payments.html#transactiontype) defined in configuration as ```createOrderOn``` it should query for carts with message's payment ID and cart's state ```Active```. If cart's ```totalPrice``` equals transaction's ```amount``` it should create an order by cart. In case amounts do not match it should log an error:
-```Cart with ID '043160d6-a86b-4ef9-af8d-a85071fefd17' and amount '150' EUR does not match its payment transaction amount of '100' EUR. Transaction ID '59463521-2c2e-4a45-a475-52d27a1b574c'```
+- For each message with state value ```Success``` and TransactionType (http://dev.commercetools.com/http-api-projects-payments.html#transactiontype) 
+defined in configuration as ```createOrderOn``` it should query for carts with message's payment ID and cart's state ```Active```.
+If the cart: 
+  - has state *other* than `ORDERED`
+  
+    and
+    
+  - the cart's `totalPrice` equals transaction's `amount` 
+it should create an order by cart. 
+In case amounts do not match it should log an error:
+
+    ```
+    Cart with ID '043160d6-a86b-4ef9-af8d-a85071fefd17' and amount '150' EUR does not match its payment transaction amount of '100' EUR. 
+    Transaction ID '59463521-2c2e-4a45-a475-52d27a1b574c'
+    ```
 
 - Created order should have (defined by the configuration rules) ```orderNumber``` and order's ```paymentState``` equals ```PAID``` set. In case of type ```custom-object``` it should get current value from defined container and key, increment by one and then use it for order creation. In case of type ```payment``` it should get ```orderNumber``` from ```payment.custom.fields.reference``` value.
 
