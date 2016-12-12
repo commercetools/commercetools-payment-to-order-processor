@@ -73,8 +73,8 @@ public class TimeStampManagerImpl implements TimeStampManager {
             LOG.info("Set new last processed timestamp: {}", lastActualProcessedMessageTimeStamp.toString());
         }
         else {
-            LOG.info("No one message was processed - lastTimestamp is unchanged: {}",
-                    lastTimestamp.map(CustomObject::getValue).map(Object::toString).orElse(""));
+            LOG.info("No one message was processed - lastTimestamp is unchanged: [{}]",
+                    lastTimestamp.map(CustomObject::getValue).map(TimeStamp::getLastTimeStamp).map(Object::toString).orElse("null"));
         }
     }
 
@@ -94,8 +94,8 @@ public class TimeStampManagerImpl implements TimeStampManager {
         }
         else {
             lastTimestamp = Optional.of(results.get(0));
-            LOG.info("Got Timestamp from commercetools platform: {} ",
-                    lastTimestamp.map(CustomObject::getValue).map(Object::toString).orElse("null"));
+            LOG.info("Got Timestamp from commercetools platform: [{}] ",
+                    lastTimestamp.map(CustomObject::getValue).map(TimeStamp::getLastTimeStamp).map(Object::toString).orElse("null"));
         }
         wasTimeStampQueried = true;
     }
