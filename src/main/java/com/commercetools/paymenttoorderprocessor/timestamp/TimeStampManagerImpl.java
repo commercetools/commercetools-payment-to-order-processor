@@ -1,20 +1,19 @@
 package com.commercetools.paymenttoorderprocessor.timestamp;
 
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-
 import io.sphere.sdk.client.BlockingSphereClient;
 import io.sphere.sdk.customobjects.CustomObject;
 import io.sphere.sdk.customobjects.CustomObjectDraft;
 import io.sphere.sdk.customobjects.commands.CustomObjectUpsertCommand;
 import io.sphere.sdk.customobjects.queries.CustomObjectQuery;
 import io.sphere.sdk.queries.PagedQueryResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Handles (read and save) the Custom-Object TimeStamp in the commercetools platform.
@@ -24,7 +23,7 @@ import io.sphere.sdk.queries.PagedQueryResult;
 public class TimeStampManagerImpl implements TimeStampManager {
 
     public static final Logger LOG = LoggerFactory.getLogger(TimeStampManagerImpl.class);
-    
+
     public TimeStampManagerImpl() {
     };
     //for Unittest
@@ -32,7 +31,7 @@ public class TimeStampManagerImpl implements TimeStampManager {
         this.containerName = containerName;
         this.client = client;
     }
-    
+
     private final String KEY = "lastUpdated";
     @Autowired
     BlockingSphereClient client;
@@ -43,7 +42,7 @@ public class TimeStampManagerImpl implements TimeStampManager {
     private boolean wasTimeStampQueried = false;
     private ZonedDateTime lastActualProcessedMessageTimeStamp;
     private boolean processingMessageFailed = false;
-    
+
     @Override
     public Optional<ZonedDateTime> getLastProcessedMessageTimeStamp() {
         if (!wasTimeStampQueried) {
@@ -75,7 +74,7 @@ public class TimeStampManagerImpl implements TimeStampManager {
             LOG.info("Could not update commercetools timestamp for lastprocessed Message, because no message was processed.");
         }
     }
-    
+
     @Override
     public void processingMessageFailed() {
         processingMessageFailed = true;
@@ -92,7 +91,8 @@ public class TimeStampManagerImpl implements TimeStampManager {
         }
         else {
             lastTimestamp = Optional.of(results.get(0));
-            LOG.info("Got Timestamp {} from commercetools platform", lastTimestamp);
+            LOG.info("Got Timestamp from commercetools platform: {} ",
+                    lastTimestamp.map(CustomObject::getValue).map(Object::toString).orElse("null"));
         }
         wasTimeStampQueried = true;
     }
