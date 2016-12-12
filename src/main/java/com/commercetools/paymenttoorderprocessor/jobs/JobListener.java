@@ -19,7 +19,6 @@ public class JobListener implements JobExecutionListener {
     @Override
     public void afterJob(JobExecution jobExecution) {
         if(jobExecution.getStatus() == BatchStatus.COMPLETED) {
-            LOG.info("Job finished. Saving new LastProcessedMessageTimeStamp to CustomObject");
             timeStampManager.persistLastProcessedMessageTimeStamp();
         }
         else {

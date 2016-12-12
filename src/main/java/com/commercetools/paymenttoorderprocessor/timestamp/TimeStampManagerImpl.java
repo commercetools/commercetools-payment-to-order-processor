@@ -69,9 +69,11 @@ public class TimeStampManagerImpl implements TimeStampManager {
             final CustomObjectDraft<TimeStamp> draft = createCustomObjectDraft();
             final CustomObjectUpsertCommand<TimeStamp> updateCommad = CustomObjectUpsertCommand.of(draft);
             client.executeBlocking(updateCommad);
+            LOG.info("Set new last processed timestamp: {}", lastActualProcessedMessageTimeStamp.toString());
         }
         else {
-            LOG.info("Could not update commercetools timestamp for lastprocessed Message, because no message was processed.");
+            LOG.info("No one message was processed - lastTimestamp is unchanged: {}",
+                    lastTimestamp.map(CustomObject::getValue).map(Object::toString).orElse(""));
         }
     }
 
