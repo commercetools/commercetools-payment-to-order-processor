@@ -1,3 +1,7 @@
+<!-- Spring boot testing has very early initialization, that's why before applying logging properties from
+     application.properties it makes already a large DEBUG output, that's why, opposite to main app, for the tests
+     we use logback-test.xml, but not application.properties -->
+
 <configuration>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
