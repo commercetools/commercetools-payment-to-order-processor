@@ -24,7 +24,7 @@ import io.sphere.sdk.queries.PagedQueryResult;
 public class TimeStampManagerImpl implements TimeStampManager {
 
     public static final Logger LOG = LoggerFactory.getLogger(TimeStampManagerImpl.class);
-    
+
     public TimeStampManagerImpl() {
     };
     //for Unittest
@@ -32,7 +32,7 @@ public class TimeStampManagerImpl implements TimeStampManager {
         this.containerName = containerName;
         this.client = client;
     }
-    
+
     private final String KEY = "lastUpdated";
     @Autowired
     BlockingSphereClient client;
@@ -43,7 +43,7 @@ public class TimeStampManagerImpl implements TimeStampManager {
     private boolean wasTimeStampQueried = false;
     private ZonedDateTime lastActualProcessedMessageTimeStamp;
     private boolean processingMessageFailed = false;
-    
+
     @Override
     public Optional<ZonedDateTime> getLastProcessedMessageTimeStamp() {
         if (!wasTimeStampQueried) {
@@ -70,12 +70,14 @@ public class TimeStampManagerImpl implements TimeStampManager {
             final CustomObjectDraft<TimeStamp> draft = createCustomObjectDraft();
             final CustomObjectUpsertCommand<TimeStamp> updateCommad = CustomObjectUpsertCommand.of(draft);
             client.executeBlocking(updateCommad);
+            LOG.info("Set new last processed timestamp: {}", lastActualProcessedMessageTimeStamp.toString());
         }
         else {
-            LOG.info("Could not update commercetools timestamp for lastprocessed Message, because no message was processed.");
+            LOG.info("No one message was processed - lastTimestamp is unchanged: [{}]",
+                    lastTimestamp.map(CustomObject::getValue).map(TimeStamp::getLastTimeStamp).map(Object::toString).orElse("null"));
         }
     }
-    
+
     @Override
     public void processingMessageFailed() {
         processingMessageFailed = true;
@@ -92,7 +94,8 @@ public class TimeStampManagerImpl implements TimeStampManager {
         }
         else {
             lastTimestamp = Optional.of(results.get(0));
-            LOG.info("Got Timestamp {} from commercetools platform", lastTimestamp);
+            LOG.info("Got Timestamp from commercetools platform: [{}] ",
+                    lastTimestamp.map(CustomObject::getValue).map(TimeStamp::getLastTimeStamp).map(Object::toString).orElse("null"));
         }
         wasTimeStampQueried = true;
     }

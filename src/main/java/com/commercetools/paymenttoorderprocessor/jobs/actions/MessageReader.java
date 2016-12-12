@@ -95,7 +95,7 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
         //Get the total workload from first Query
         if (!wasInitialQueried) {
             total = result.getTotal();
-            LOG.info("First Query returned {} results. This this the workload for the Job.", total);
+            LOG.info("First Query returned {} results.", total);
         }
         //Due to nondeterministic ordering of messages with same timestamp we fetch next pages with overlap
         offset = result.getOffset() + RESULTSPERPAGE - PAGEOVERLAP;

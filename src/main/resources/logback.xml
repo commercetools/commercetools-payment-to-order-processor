@@ -16,10 +16,9 @@
         <appender-ref ref="ASYNCSTDOUT" />
     </root>
 
-    <!-- suppress over-flood debugging info in the tests:
-         by default spring boot and netty output over 10 thousand lines for just 4 tests!
-         The packages below are the most flooding ones, so use INFO level for them. -->
-    <!--<logger name="org.springframework" level="INFO" />
-    <logger name="io.netty" level="INFO" />
-    <logger name="org.asynchttpclient.netty" level="INFO" />-->
+    <logger name="org.springframework.context.annotation.ConfigurationClassEnhancer" level="WARN" />
+
+    <!-- these 2 classes produce unnecessary warning about Beans mapping and default datasource absence. -->
+    <logger name="org.springframework.context.annotation.ConfigurationClassEnhancer" level="ERROR" />
+    <logger name="org.springframework.batch.core.configuration.annotation.DefaultBatchConfigurer" level="ERROR" />
 </configuration>
