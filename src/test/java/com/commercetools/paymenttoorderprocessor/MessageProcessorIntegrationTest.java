@@ -27,8 +27,8 @@ import io.sphere.sdk.taxcategories.queries.TaxCategoryQuery;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.ConfigFileApplicationContextInitializer;
-import org.springframework.boot.test.SpringApplicationContextLoader;
+import org.springframework.boot.test.context.ConfigFileApplicationContextInitializer;
+import org.springframework.boot.test.context.SpringBootContextLoader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
@@ -42,9 +42,10 @@ import static com.commercetools.paymenttoorderprocessor.fixtures.PaymentFixtures
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {BasicTestConfiguration.class, ExtendedTestConfiguration.class, ShereClientConfiguration.class, MessageProcessorIntegrationTest.ContextConfiguration.class},
+@ContextConfiguration(classes = {BasicTestConfiguration.class, ExtendedTestConfiguration.class,
+        ShereClientConfiguration.class, MessageProcessorIntegrationTest.ContextConfiguration.class},
         initializers = ConfigFileApplicationContextInitializer.class,
-        loader = SpringApplicationContextLoader.class)
+        loader = SpringBootContextLoader.class)
 public class MessageProcessorIntegrationTest extends IntegrationTest {
 
     @Autowired
