@@ -16,7 +16,7 @@
         <appender-ref ref="ASYNCSTDOUT" />
     </root>
 
-    <logger name="org.springframework.context.annotation.ConfigurationClassEnhancer" level="WARN" />
+    <logger name="org.springframework" level="WARN" />
 
     <!-- these 2 classes produce unnecessary warning about Beans mapping and default datasource absence. -->
     <logger name="org.springframework.context.annotation.ConfigurationClassEnhancer" level="ERROR" />
