@@ -1,7 +1,11 @@
 package com.commercetools.paymenttoorderprocessor;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+import com.commercetools.paymenttoorderprocessor.fixtures.TimeStampFixtures;
+import com.commercetools.paymenttoorderprocessor.testconfiguration.BasicTestConfiguration;
+import com.commercetools.paymenttoorderprocessor.testconfiguration.TimeStampTestConfiguration;
+import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
+import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManagerImpl;
+import io.sphere.sdk.client.BlockingSphereClient;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -9,25 +13,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.ConfigFileApplicationContextInitializer;
-import org.springframework.boot.test.SpringApplicationContextLoader;
+import org.springframework.boot.test.context.ConfigFileApplicationContextInitializer;
+import org.springframework.boot.test.context.SpringBootContextLoader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.commercetools.paymenttoorderprocessor.fixtures.TimeStampFixtures;
-import com.commercetools.paymenttoorderprocessor.testconfiguration.BasicTestConfiguration;
-import com.commercetools.paymenttoorderprocessor.testconfiguration.TimeStampTestConfiguration;
-import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
-import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManagerImpl;
-
-import io.sphere.sdk.client.BlockingSphereClient;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {BasicTestConfiguration.class, TimeStampTestConfiguration.class, ShereClientConfiguration.class},
         initializers = ConfigFileApplicationContextInitializer.class,
-        loader = SpringApplicationContextLoader.class)
+        loader = SpringBootContextLoader.class)
 public class TimeStampIntegrationTest extends IntegrationTest {
 
     public static final Logger LOG = LoggerFactory.getLogger(TimeStampIntegrationTest.class);
