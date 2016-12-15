@@ -84,7 +84,7 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
                 .filter(message -> messageProcessedManager.isMessageUnprocessed(message))
                 .collect(Collectors.toList());
 
-        LOG.info("{} of {} messages on current page are unprocessed", messages.size(), result.size());
+        LOG.info("total {} messages, {} on current page, {} of them are are unprocessed", total, result.size(), messages.size());
     }
 
 
@@ -95,7 +95,7 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
         //Get the total workload from first Query
         if (!wasInitialQueried) {
             total = result.getTotal();
-            LOG.info("First Query returned {} results.", total);
+            LOG.debug("First Query returned {} results.", total);
         }
         //Due to nondeterministic ordering of messages with same timestamp we fetch next pages with overlap
         offset = result.getOffset() + RESULTSPERPAGE - PAGEOVERLAP;
