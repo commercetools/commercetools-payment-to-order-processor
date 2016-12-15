@@ -41,7 +41,7 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
     /**
      * Must be exactly 16 characters for used {@link #ENCRYPTIONALGORITHM} == Blowfish method.
      */
-    @Value("${createorder.encryptionkey}")
+    @Value("${createorder.encryption.secret}")
     private String encryptionKey;
 
     /**
