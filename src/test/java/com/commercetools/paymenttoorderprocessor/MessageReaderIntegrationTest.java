@@ -1,39 +1,33 @@
 package com.commercetools.paymenttoorderprocessor;
 
-import static com.commercetools.paymenttoorderprocessor.fixtures.PaymentFixtures.EURO_20;
-import static org.assertj.core.api.Assertions.assertThat;
-
+import com.commercetools.paymenttoorderprocessor.fixtures.PaymentFixtures;
+import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageReader;
+import com.commercetools.paymenttoorderprocessor.testconfiguration.BasicTestConfiguration;
+import com.commercetools.paymenttoorderprocessor.testconfiguration.ExtendedTestConfiguration;
+import io.sphere.sdk.client.BlockingSphereClient;
+import io.sphere.sdk.payments.*;
+import io.sphere.sdk.payments.commands.PaymentUpdateCommand;
+import io.sphere.sdk.payments.commands.updateactions.AddTransaction;
+import io.sphere.sdk.payments.commands.updateactions.ChangeTransactionState;
+import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.ConfigFileApplicationContextInitializer;
-import org.springframework.boot.test.SpringApplicationContextLoader;
+import org.springframework.boot.test.context.ConfigFileApplicationContextInitializer;
+import org.springframework.boot.test.context.SpringBootContextLoader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.commercetools.paymenttoorderprocessor.fixtures.PaymentFixtures;
-import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageReader;
-import com.commercetools.paymenttoorderprocessor.testconfiguration.BasicTestConfiguration;
-import com.commercetools.paymenttoorderprocessor.testconfiguration.ExtendedTestConfiguration;
-
-import io.sphere.sdk.client.BlockingSphereClient;
-import io.sphere.sdk.payments.Payment;
-import io.sphere.sdk.payments.Transaction;
-import io.sphere.sdk.payments.TransactionDraft;
-import io.sphere.sdk.payments.TransactionDraftBuilder;
-import io.sphere.sdk.payments.TransactionState;
-import io.sphere.sdk.payments.TransactionType;
-import io.sphere.sdk.payments.commands.PaymentUpdateCommand;
-import io.sphere.sdk.payments.commands.updateactions.AddTransaction;
-import io.sphere.sdk.payments.commands.updateactions.ChangeTransactionState;
-import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
+import static com.commercetools.paymenttoorderprocessor.fixtures.PaymentFixtures.EURO_20;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {BasicTestConfiguration.class, ExtendedTestConfiguration.class, ShereClientConfiguration.class, MessageReaderIntegrationTest.ContextConfiguration.class},
+@ContextConfiguration(classes = {BasicTestConfiguration.class, ExtendedTestConfiguration.class,
+        ShereClientConfiguration.class, MessageReaderIntegrationTest.ContextConfiguration.class},
         initializers = ConfigFileApplicationContextInitializer.class,
-        loader = SpringApplicationContextLoader.class)
+        loader = SpringBootContextLoader.class)
 public class MessageReaderIntegrationTest extends IntegrationTest {
 
     //For each test we need own instance of messageReader because its not stateless
