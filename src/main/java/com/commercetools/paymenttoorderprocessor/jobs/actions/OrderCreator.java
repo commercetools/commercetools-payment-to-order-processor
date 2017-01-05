@@ -7,6 +7,7 @@ import io.netty.handler.codec.http.QueryStringEncoder;
 import io.sphere.sdk.carts.Cart;
 import io.sphere.sdk.http.*;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.ObjectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
@@ -106,14 +107,26 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
             httpResponse = httpClient.execute(httpRequest).toCompletableFuture()
                     .get(createOrderTimeout, TimeUnit.MILLISECONDS);
 
+            String responseBody = getStringFromResponseBody(httpResponse.getResponseBody());
+
             if (httpResponse.hasSuccessResponseCode()) {
+                if (ObjectUtils.compare(httpResponse.getStatusCode(), HttpStatusCode.CREATED_201) == 0) {
+                    // normal case: cart is created successfully
+                    LOG.info("Success with status {}. Processed cart id=[{}], created order id=[{}]",
+                            httpResponse.getStatusCode(), cartAndMessage.getCart().getId(), responseBody);
+                } else {
+                    // the request is finished successfully, but this cart can't be processed.
+                    // this case should be reported, but not re-tried any more
+                    LOG.warn("Request is successful with status {}, but order is not created. "
+                                    + "Cart [{}] is not processed. Reason: {} ",
+                            httpResponse.getStatusCode(), cartAndMessage.getCart().getId(), responseBody);
+                }
+
                 messageProcessedManager.setMessageIsProcessed(cartAndMessage.getMessage());
-                LOG.info("Processed cart id=[{}], created order id=[{}]",
-                        cartAndMessage.getCart().getId(), getStringFromResponseBody(httpResponse.getResponseBody()));
             } else {
+                // request is not successful: should be re-tried later
                 timeStampManager.processingMessageFailed();
-                LOG.warn("Response Code from API was {}, response body: \"{}\"",
-                        httpResponse.getStatusCode(), getStringFromResponseBody(httpResponse.getResponseBody()));
+                LOG.error("Failed with status {}. Reason: {}", httpResponse.getStatusCode(), responseBody);
             }
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             logErrorAndFailTimestamp(e, "HTTP", urlstring, cart);
