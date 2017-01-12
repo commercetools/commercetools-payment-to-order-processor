@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.commercetools.payment-to-order-processor</groupId>
     <artifactId>payment-to-order-processor</artifactId>
-    <version>0.3.4</version>
+    <version>0.4-SNAPSHOT</version>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
