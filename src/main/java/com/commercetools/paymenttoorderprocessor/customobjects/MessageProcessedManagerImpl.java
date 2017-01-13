@@ -1,12 +1,5 @@
 package com.commercetools.paymenttoorderprocessor.customobjects;
 
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-
 import io.sphere.sdk.client.BlockingSphereClient;
 import io.sphere.sdk.customobjects.CustomObject;
 import io.sphere.sdk.customobjects.CustomObjectDraft;
@@ -14,16 +7,22 @@ import io.sphere.sdk.customobjects.commands.CustomObjectUpsertCommand;
 import io.sphere.sdk.customobjects.queries.CustomObjectQuery;
 import io.sphere.sdk.messages.Message;
 import io.sphere.sdk.queries.PagedQueryResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+
+import java.util.List;
 
 /**
  * Reads custom objects in commercetools platform and checks if Message was already processed.
- * @author mht@dotsource.de
  *
+ * @author mht@dotsource.de
  */
-public class MessageProcessedManagerImpl implements MessageProcessedManager{
+public class MessageProcessedManagerImpl implements MessageProcessedManager {
 
     public static final Logger LOG = LoggerFactory.getLogger(MessageProcessedManagerImpl.class);
-    
+
     @Autowired
     private BlockingSphereClient client;
 
@@ -41,11 +40,10 @@ public class MessageProcessedManagerImpl implements MessageProcessedManager{
         final List<CustomObject<String>> results = result.getResults();
         if (results.isEmpty()) {
             return true;
-        }
-        else {
+        } else {
             //There should be can only be one Custom Object because Key/Container is unique
-            assert(results.size() == 1);
-            final CustomObject<String> customObject= results.get(0);
+            assert (results.size() == 1);
+            final CustomObject<String> customObject = results.get(0);
             return !PROCESSED.equals(customObject.getValue());
         }
     }
@@ -53,6 +51,6 @@ public class MessageProcessedManagerImpl implements MessageProcessedManager{
     @Override
     public void setMessageIsProcessed(Message message) {
         final CustomObjectDraft<String> draft = CustomObjectDraft.ofUnversionedUpsert(customObjectContainerName, message.getId(), PROCESSED, String.class);
-        client.executeBlocking(CustomObjectUpsertCommand.of(draft)); 
+        client.executeBlocking(CustomObjectUpsertCommand.of(draft));
     }
 }
