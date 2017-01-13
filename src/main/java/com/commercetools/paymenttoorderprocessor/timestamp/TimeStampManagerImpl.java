@@ -17,8 +17,8 @@ import java.util.Optional;
 
 /**
  * Handles (read and save) the Custom-Object TimeStamp in the commercetools platform.
- * @author mht@dotsource.de
  *
+ * @author mht@dotsource.de
  */
 public class TimeStampManagerImpl implements TimeStampManager {
 
@@ -102,7 +102,7 @@ public class TimeStampManagerImpl implements TimeStampManager {
         if (lastTimestamp.isPresent()) {
             return CustomObjectDraft.ofVersionedUpdate(lastTimestamp.get(), timeStamp, TimeStamp.class);
         } else {
-            return CustomObjectDraft.ofUnversionedUpsert(containerName, KEY ,timeStamp, TimeStamp.class);
+            return CustomObjectDraft.ofUnversionedUpsert(containerName, KEY, timeStamp, TimeStamp.class);
         }
     }
 }

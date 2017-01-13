@@ -1,21 +1,8 @@
 package com.commercetools.paymenttoorderprocessor.jobs.actions;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
-import javax.annotation.Nullable;
-import javax.money.MonetaryAmount;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.batch.item.ItemProcessor;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
 import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager.PaymentCreationConfigurationManager;
 import com.commercetools.paymenttoorderprocessor.wrapper.CartAndMessage;
-
 import io.sphere.sdk.carts.Cart;
 import io.sphere.sdk.carts.CartState;
 import io.sphere.sdk.carts.queries.CartQuery;
@@ -24,6 +11,16 @@ import io.sphere.sdk.payments.Payment;
 import io.sphere.sdk.payments.Transaction;
 import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 import io.sphere.sdk.payments.queries.PaymentByIdGet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.batch.item.ItemProcessor;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.annotation.Nullable;
+import javax.money.MonetaryAmount;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 /***
  * Checks if PaymentTransactionStateChangedMessage and corresponding Cart is viable for creation of an Order
@@ -47,35 +44,30 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
         LOG.debug("Called MessageFilter.process with parameter {}", message);
         final Payment payment = getCorrespondingPayment(message);
         if (payment != null) {
-            if(paymentCreationConfigurationManager.doesTransactionStateMatchConfiguration(message, payment)) {
+            if (paymentCreationConfigurationManager.doesTransactionStateMatchConfiguration(message, payment)) {
                 final Optional<Cart> oCart = getCorrespondingCart(payment);
-                if (oCart.isPresent()){
+                if (oCart.isPresent()) {
                     final Cart cart = oCart.get();
-                    if (cart.getCartState() != CartState.ORDERED){
-                        if(isCartAmountEqualToTransaction(cart, payment, message)) {
+                    if (cart.getCartState() != CartState.ORDERED) {
+                        if (isCartAmountEqualToTransaction(cart, payment, message)) {
                             return new CartAndMessage(cart, message);
-                        }
-                        else {
+                        } else {
                             LOG.warn("Cannot create Order for Cart {}. The transactionamout of Transaction {} does not match cart.", cart.getId(), message.getTransactionId());
                             messageProcessedManager.setMessageIsProcessed(message);
                         }
-                    }
-                    else {
+                    } else {
                         LOG.info("Cart {} is already orderd nothing to do.", cart.getId());
                         messageProcessedManager.setMessageIsProcessed(message);
                     }
-                }
-                else {
+                } else {
                     LOG.warn("There is no cart connected to payment with id {}.", message.getResource().getId());
                     messageProcessedManager.setMessageIsProcessed(message);
                 }
-            }
-            else {
+            } else {
                 LOG.warn("PaymentTransactionStateChangedMessage {} has not the correct Trasactionstate to be processed.", message.getId());
                 messageProcessedManager.setMessageIsProcessed(message);
             }
-        }
-        else {
+        } else {
             LOG.warn("There is no payment in commercetools platform with id {}.", message.getResource().getId());
             messageProcessedManager.setMessageIsProcessed(message);
         }
@@ -94,10 +86,9 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
         final CartQuery cartQuery = CartQuery.of()
                 .withPredicates(m -> m.paymentInfo().payments().isIn(Collections.singletonList(payment)));
         List<Cart> results = client.executeBlocking(cartQuery).getResults();
-        if (results.isEmpty()){
+        if (results.isEmpty()) {
             return Optional.empty();
-        }
-        else {
+        } else {
             //assume one payment is not assigned to multiple carts
             assert results.size() == 1;
             return Optional.of(results.get(0));

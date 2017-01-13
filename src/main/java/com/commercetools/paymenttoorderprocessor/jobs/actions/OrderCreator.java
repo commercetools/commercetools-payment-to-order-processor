@@ -96,7 +96,7 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
 
         if (isNoneEmpty(authentication)) {
             String encoded = Base64.encodeBase64String(authentication.getBytes());
-            httpHeaders = httpHeaders.plus(HttpHeaders.AUTHORIZATION,  "Basic " + encoded);
+            httpHeaders = httpHeaders.plus(HttpHeaders.AUTHORIZATION, "Basic " + encoded);
         }
 
         final HttpRequest httpRequest = HttpRequest.of(HttpMethod.GET, queryStringEncoder.toString(), httpHeaders, null);
@@ -140,11 +140,11 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
      * Log occurred exception mark the flow as failed, so the timestamp will not be updated (incremented) any more
      * (see {@link TimeStampManager#processingMessageFailed()}).
      *
-     * @param e Throwable to log.
+     * @param e             Throwable to log.
      * @param exceptionType Internal custom exception type just to distinct in the logs different reasons
      *                      (like, "HTTP" exception, or "encryption" and so on)
-     * @param urlstring last called URL which request caused the exception.
-     * @param cart {@link Cart} which processing failed
+     * @param urlstring     last called URL which request caused the exception.
+     * @param cart          {@link Cart} which processing failed
      */
     private void logErrorAndFailTimestamp(Throwable e, String exceptionType, String urlstring, Cart cart) {
         LOG.error("Caught {} exception while calling Shop URL {} to create Order from Cart {}. Exception message: [{}]",
@@ -169,6 +169,7 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
 
     /**
      * Converts {@code responseBody} byte array to String value
+     *
      * @param responseBody value to convert
      * @return converting result if {@code responseBody} exists, "<<empty>>" string value otherwise.
      */

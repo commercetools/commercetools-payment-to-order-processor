@@ -1,31 +1,29 @@
 package com.commercetools.paymenttoorderprocessor.jobs.actions;
 
-import java.time.ZonedDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
+import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
+import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
+import io.sphere.sdk.client.BlockingSphereClient;
+import io.sphere.sdk.messages.Message;
+import io.sphere.sdk.messages.queries.MessageQuery;
+import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
+import io.sphere.sdk.queries.PagedQueryResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
-import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
-import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
-
-import io.sphere.sdk.client.BlockingSphereClient;
-import io.sphere.sdk.messages.Message;
-import io.sphere.sdk.messages.queries.MessageQuery;
-import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
-import io.sphere.sdk.queries.PagedQueryResult;
+import java.time.ZonedDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Reads PaymentTransactionStateChangedMessages from the commercetools platform.
  * To assure all messages are processed a Custom Object in the platform saves all message ids.
- * @author mht@dotsource.de
  *
+ * @author mht@dotsource.de
  */
 
 public class MessageReader implements ItemReader<PaymentTransactionStateChangedMessage> {
@@ -79,7 +77,7 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
 
     private void getUnprocessedMessagesFromPlatform() {
         final List<Message> result = queryPlatform();
-        messages =  result.stream()
+        messages = result.stream()
                 .map(message -> message.as(PaymentTransactionStateChangedMessage.class))
                 .filter(message -> messageProcessedManager.isMessageUnprocessed(message))
                 .collect(Collectors.toList());

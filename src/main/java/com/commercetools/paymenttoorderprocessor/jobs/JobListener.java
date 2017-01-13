@@ -1,13 +1,12 @@
 package com.commercetools.paymenttoorderprocessor.jobs;
 
+import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
 
 public class JobListener implements JobExecutionListener {
 
@@ -18,10 +17,9 @@ public class JobListener implements JobExecutionListener {
 
     @Override
     public void afterJob(JobExecution jobExecution) {
-        if(jobExecution.getStatus() == BatchStatus.COMPLETED) {
+        if (jobExecution.getStatus() == BatchStatus.COMPLETED) {
             timeStampManager.persistLastProcessedMessageTimeStamp();
-        }
-        else {
+        } else {
             LOG.error("Job did not complete. BatchStatus is {}", jobExecution.getStatus());
         }
     }

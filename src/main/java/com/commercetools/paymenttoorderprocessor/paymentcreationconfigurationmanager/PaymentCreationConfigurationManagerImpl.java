@@ -2,14 +2,10 @@ package com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationma
 
 import io.sphere.sdk.payments.Payment;
 import io.sphere.sdk.payments.TransactionState;
-import io.sphere.sdk.payments.TransactionType;
 import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeSet;
 
 public class PaymentCreationConfigurationManagerImpl implements PaymentCreationConfigurationManager {
 
@@ -21,7 +17,7 @@ public class PaymentCreationConfigurationManagerImpl implements PaymentCreationC
         final String transactionID = message.getTransactionId();
         return TransactionState.SUCCESS.equals(message.getState())
                 && (payment.getTransactions().stream().anyMatch(
-                        transaction -> transactionID.equals(transaction.getId())
-                                && Arrays.stream(transactionTypes).anyMatch(type -> type.equals(transaction.getType().toString()))));
+                transaction -> transactionID.equals(transaction.getId())
+                        && Arrays.stream(transactionTypes).anyMatch(type -> type.equals(transaction.getType().toString()))));
     }
 }
