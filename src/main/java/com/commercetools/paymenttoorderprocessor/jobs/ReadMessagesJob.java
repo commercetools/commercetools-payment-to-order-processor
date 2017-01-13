@@ -1,5 +1,16 @@
 package com.commercetools.paymenttoorderprocessor.jobs;
 
+import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
+import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManagerImpl;
+import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageFilter;
+import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageReader;
+import com.commercetools.paymenttoorderprocessor.jobs.actions.OrderCreator;
+import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager.PaymentCreationConfigurationManager;
+import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager.PaymentCreationConfigurationManagerImpl;
+import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
+import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManagerImpl;
+import com.commercetools.paymenttoorderprocessor.wrapper.CartAndMessage;
+import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
@@ -15,19 +26,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 
-import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
-import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManagerImpl;
-import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageFilter;
-import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageReader;
-import com.commercetools.paymenttoorderprocessor.jobs.actions.OrderCreator;
-import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager.PaymentCreationConfigurationManager;
-import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager.PaymentCreationConfigurationManagerImpl;
-import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
-import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManagerImpl;
-import com.commercetools.paymenttoorderprocessor.wrapper.CartAndMessage;
-
-import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
-
 
 /***
  * Defines the structure of the Payment-To-Order-Processor.
@@ -39,7 +37,7 @@ import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 @EnableBatchProcessing
 public class ReadMessagesJob {
     private static final String STEP_LOAD_MESSAGES = "loadMessages";
-    
+
     @Autowired
     private JobBuilderFactory jobs;
 
@@ -93,11 +91,11 @@ public class ReadMessagesJob {
     }
 
     @Bean
-    public Step loadMessages(ItemReader<PaymentTransactionStateChangedMessage> reader, 
-            ItemProcessor<PaymentTransactionStateChangedMessage, CartAndMessage> processor,
-            ItemWriter<CartAndMessage> writer) {
+    public Step loadMessages(ItemReader<PaymentTransactionStateChangedMessage> reader,
+                             ItemProcessor<PaymentTransactionStateChangedMessage, CartAndMessage> processor,
+                             ItemWriter<CartAndMessage> writer) {
         return steps.get(STEP_LOAD_MESSAGES)
-                .<PaymentTransactionStateChangedMessage, CartAndMessage> chunk(1)
+                .<PaymentTransactionStateChangedMessage, CartAndMessage>chunk(1)
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)
