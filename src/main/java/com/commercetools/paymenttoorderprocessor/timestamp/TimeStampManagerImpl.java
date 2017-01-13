@@ -27,8 +27,6 @@ public class TimeStampManagerImpl implements TimeStampManager {
     public TimeStampManagerImpl() {
     }
 
-    ;
-
     //for Unittest
     public TimeStampManagerImpl(final String containerName, final BlockingSphereClient client) {
         this.containerName = containerName;
