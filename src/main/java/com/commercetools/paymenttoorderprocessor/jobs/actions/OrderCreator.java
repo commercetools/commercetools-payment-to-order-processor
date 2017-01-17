@@ -122,10 +122,9 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
                             httpResponse.getStatusCode(), cartAndMessage.getCart().getId(), responseBody);
                 }
 
-                // mark the message as processed and don't re-try to create the order any more
                 messageProcessedManager.setMessageIsProcessed(cartAndMessage.getMessage());
             } else {
-                // request is not successful (not 2xx code): should be re-tried later
+                // request is not successful: should be re-tried later
                 timeStampManager.processingMessageFailed();
                 LOG.error("Failed with status {}. Reason: {}", httpResponse.getStatusCode(), responseBody);
             }
