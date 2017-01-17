@@ -100,6 +100,10 @@ public class CartAndMessageCreateHelper {
         final CartAndMessage cartAndMessage = messageProcessor.process(message[0]);
         assertThat(cartAndMessage).isNotNull()
                 .withFailMessage(format("Can't create message CartAndMessage for the payment [%s]", payment));
+        final Cart cartToTest = cartAndMessage.getCart();
+        assertThat(cartToTest).isNotNull();
+        assertThat(cartToTest.getId()).isEqualTo(cartWithPayment.getId())
+                .withFailMessage(format("Processed cart id [%s] is incorrect", cartToTest.getId()));
 
         return cartAndMessage;
     }
