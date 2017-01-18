@@ -19,29 +19,38 @@ import java.util.Optional;
 
 @Configuration
 public class ExtendedTestConfiguration {
+
     @Bean
     public TimeStampManager timeStampManager() {
         return new TimeStampManager() {
 
+            private ZonedDateTime actualProcessedMessageTimeStamp = null;
+
+            //by default just get Messages from last 2 minutes
+            private ZonedDateTime lastProcessedMessageTimeStamp = ZonedDateTime.now().minusMinutes(2L);
+
+            private boolean processingMessageFailed = false;
+
             @Override
             public void setActualProcessedMessageTimeStamp(ZonedDateTime timeStamp) {
-                //not needed in test
+                if (!processingMessageFailed) {
+                    actualProcessedMessageTimeStamp = timeStamp;
+                }
             }
 
             @Override
             public void persistLastProcessedMessageTimeStamp() {
-                //not needed in test
+                lastProcessedMessageTimeStamp = actualProcessedMessageTimeStamp;
             }
 
             @Override
             public Optional<ZonedDateTime> getLastProcessedMessageTimeStamp() {
-                //just get Messages from last 2 minutes
-                return Optional.of(ZonedDateTime.now().minusMinutes(2L));
+                return Optional.ofNullable(lastProcessedMessageTimeStamp);
             }
 
             @Override
             public void processingMessageFailed() {
-                //not needed in test
+                processingMessageFailed = true;
             }
         };
     }
