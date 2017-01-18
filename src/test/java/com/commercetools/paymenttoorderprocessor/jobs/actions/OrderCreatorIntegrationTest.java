@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         loader = SpringBootContextLoader.class)
 // clean context to create new singletons after every test, because they are stateful!!!
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-public class OrderCreatorTest {
+public class OrderCreatorIntegrationTest {
 
     @Autowired
     private MessageProcessedManager messageProcessedManager;
