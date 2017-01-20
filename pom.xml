@@ -55,6 +55,14 @@
             <version>1.9</version>
         </dependency>
 
+        <!-- Compile time validation -->
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- for tests -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
