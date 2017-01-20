@@ -9,8 +9,6 @@ import io.sphere.sdk.client.BlockingSphereClient;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.ConfigFileApplicationContextInitializer;
@@ -27,8 +25,6 @@ import static org.assertj.core.api.Assertions.assertThat;
         initializers = ConfigFileApplicationContextInitializer.class,
         loader = SpringBootContextLoader.class)
 public class TimeStampIntegrationTest extends IntegrationTest {
-
-    public static final Logger LOG = LoggerFactory.getLogger(TimeStampIntegrationTest.class);
 
     @Configuration
     public static class ContextConfiguration {
@@ -53,14 +49,14 @@ public class TimeStampIntegrationTest extends IntegrationTest {
     @Test
     public void noTimeStamp() throws Exception {
         TimeStampFixtures.removeTimeStamps(testClient ,container);
-        assertThat(timeStampManager.getLastProcessedMessageTimeStamp()).isNotPresent();
+        assertThat(timeStampManager.getLastProcessedMessageTimeStamp()).isNull();
     }
 
     @Test
     public void withTimeStamp() throws Exception {
         TimeStampFixtures.withTimeStamp(testClient, container, timeStamp -> {
-            assertThat(timeStampManager.getLastProcessedMessageTimeStamp()).isPresent();
-            assertThat(timeStampManager.getLastProcessedMessageTimeStamp().get()).isEqualTo(timeStamp.getLastTimeStamp());
+            assertThat(timeStampManager.getLastProcessedMessageTimeStamp()).isNotNull();
+            assertThat(timeStampManager.getLastProcessedMessageTimeStamp()).isEqualTo(timeStamp.getLastTimeStamp());
             return timeStamp;
         });
     }

@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Value;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -109,10 +108,10 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
                 .withSort(m -> m.lastModifiedAt().sort().asc())
                 .withOffset(offset)
                 .withLimit(RESULTSPERPAGE);
-        final Optional<ZonedDateTime> timestamp = timeStampManager.getLastProcessedMessageTimeStamp();
-        if (timestamp.isPresent()) {
+        final ZonedDateTime timestamp = timeStampManager.getLastProcessedMessageTimeStamp();
+        if (timestamp != null) {
             messageQuery = messageQuery.plusPredicates(
-                    m -> m.lastModifiedAt().isGreaterThan(timestamp.get().minusMinutes(minutesOverlapping)));
+                    m -> m.lastModifiedAt().isGreaterThan(timestamp.minusMinutes(minutesOverlapping)));
         }
     }
 }

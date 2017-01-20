@@ -15,7 +15,6 @@ import org.springframework.context.annotation.Scope;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
-import java.util.Optional;
 
 @Configuration
 public class ExtendedTestConfiguration {
@@ -44,8 +43,8 @@ public class ExtendedTestConfiguration {
             }
 
             @Override
-            public Optional<ZonedDateTime> getLastProcessedMessageTimeStamp() {
-                return Optional.ofNullable(lastProcessedMessageTimeStamp);
+            public ZonedDateTime getLastProcessedMessageTimeStamp() {
+                return lastProcessedMessageTimeStamp;
             }
 
             @Override

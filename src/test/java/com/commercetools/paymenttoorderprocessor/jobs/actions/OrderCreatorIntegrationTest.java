@@ -147,7 +147,7 @@ public class OrderCreatorIntegrationTest {
     private void persistAndAssertTimestampEquals(ZonedDateTime actualProcessedMessageTimeStamp) {
         timeStampManager.persistLastProcessedMessageTimeStamp();
 
-        assertThat(timeStampManager.getLastProcessedMessageTimeStamp().get())
+        assertThat(timeStampManager.getLastProcessedMessageTimeStamp())
                 .isEqualTo(actualProcessedMessageTimeStamp);
 
     }
