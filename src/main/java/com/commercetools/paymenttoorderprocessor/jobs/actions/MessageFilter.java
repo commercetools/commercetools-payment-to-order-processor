@@ -58,7 +58,7 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
                             messageProcessedManager.setMessageIsProcessed(message);
                         }
                     } else {
-                        LOG.info("Cart {} is already ordered nothing to do.", cart.getId());
+                        // Cart is already ordered - nothing to do
                         messageProcessedManager.setMessageIsProcessed(message);
                     }
                 } else {
