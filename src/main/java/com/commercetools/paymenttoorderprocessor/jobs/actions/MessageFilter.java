@@ -58,7 +58,7 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
                             messageProcessedManager.setMessageIsProcessed(message);
                         }
                     } else {
-                        // Cart is already ordered - nothing to do
+                        LOG.debug("Cart {} is already ordered nothing to do.", cart.getId());
                         messageProcessedManager.setMessageIsProcessed(message);
                     }
                 } else {
@@ -66,7 +66,7 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
                     messageProcessedManager.setMessageIsProcessed(message);
                 }
             } else {
-                LOG.error("PaymentTransactionStateChangedMessage {} has not the correct Trasaction state to be processed.", message.getId());
+                LOG.debug("PaymentTransactionStateChangedMessage {} has not the correct Trasaction state to be processed.", message.getId());
                 messageProcessedManager.setMessageIsProcessed(message);
             }
         } else {
