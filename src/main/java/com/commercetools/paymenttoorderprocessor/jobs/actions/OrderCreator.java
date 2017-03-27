@@ -126,7 +126,7 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
                 } else {
                     // the request is finished successfully, but this cart can't be processed.
                     // this case should be reported, but not re-tried any more
-                    LOG.warn("Request is successful with status {}, but order is not created. "
+                    LOG.info("Request is successful with status {}, but order is not created. "
                                     + "Cart [{}] is not processed. Reason: {} ",
                             httpResponse.getStatusCode(), cartAndMessage.getCart().getId(), responseBodyToLog);
                 }
