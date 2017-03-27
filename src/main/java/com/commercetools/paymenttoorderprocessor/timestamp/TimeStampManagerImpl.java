@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -39,21 +41,21 @@ public class TimeStampManagerImpl implements TimeStampManager {
 
     @Value("${ctp.custom.object.containername}")
     private String containerName;
-    private Optional<CustomObject<TimeStamp>> lastTimestamp = Optional.empty();
+
+    @Nullable
+    private CustomObject<TimeStamp> lastTimestamp = null;
+
     private boolean wasTimeStampQueried = false;
     private ZonedDateTime lastActualProcessedMessageTimeStamp;
     private boolean processingMessageFailed = false;
 
     @Override
-    public Optional<ZonedDateTime> getLastProcessedMessageTimeStamp() {
+    public ZonedDateTime getLastProcessedMessageTimeStamp() {
         if (!wasTimeStampQueried) {
             queryTimeStamp();
         }
-        if (lastTimestamp.isPresent()) {
-            return Optional.of(lastTimestamp.get().getValue().getLastTimeStamp());
-        } else {
-            return Optional.empty();
-        }
+
+        return lastTimestamp != null ? lastTimestamp.getValue().getLastTimeStamp() : null;
     }
 
     @Override
@@ -72,7 +74,7 @@ public class TimeStampManagerImpl implements TimeStampManager {
             LOG.info("Set new last processed timestamp: {}", lastActualProcessedMessageTimeStamp.toString());
         } else {
             LOG.info("No one message was processed - lastTimestamp is unchanged: [{}]",
-                    lastTimestamp.map(CustomObject::getValue).map(TimeStamp::getLastTimeStamp).map(Object::toString).orElse("null"));
+                timestampToString(lastTimestamp));
         }
     }
 
@@ -88,22 +90,29 @@ public class TimeStampManagerImpl implements TimeStampManager {
         final PagedQueryResult<CustomObject<TimeStamp>> result = client.executeBlocking(customObjectQuery);
         final List<CustomObject<TimeStamp>> results = result.getResults();
         if (results.isEmpty()) {
-            LOG.warn("No Timestamp for last processed message for was found at commercetools platform. This should only happen on the first run.");
+            LOG.warn("No Timestamp for last processed message has been found. This should only happen on the first run.");
         } else {
-            lastTimestamp = Optional.of(results.get(0));
-            LOG.info("Got Timestamp from commercetools platform: [{}] ",
-                    lastTimestamp.map(CustomObject::getValue).map(TimeStamp::getLastTimeStamp).map(Object::toString).orElse("null"));
+            lastTimestamp = results.get(0);
+            LOG.info("Last processed messages time stamp: [{}] ", timestampToString(lastTimestamp));
         }
         wasTimeStampQueried = true;
     }
 
     private CustomObjectDraft<TimeStamp> createCustomObjectDraft() {
         final TimeStamp timeStamp = new TimeStamp(lastActualProcessedMessageTimeStamp);
-        LOG.info("Writing Custom Object {} ", lastActualProcessedMessageTimeStamp);
-        if (lastTimestamp.isPresent()) {
-            return CustomObjectDraft.ofVersionedUpdate(lastTimestamp.get(), timeStamp, TimeStamp.class);
+        if (lastTimestamp != null) {
+            return CustomObjectDraft.ofVersionedUpdate(lastTimestamp, timeStamp, TimeStamp.class);
         } else {
             return CustomObjectDraft.ofUnversionedUpsert(containerName, KEY, timeStamp, TimeStamp.class);
         }
+    }
+
+    @Nonnull
+    private static String timestampToString(CustomObject<TimeStamp> timestamp) {
+      return Optional.ofNullable(timestamp)
+          .map(CustomObject::getValue)
+          .map(TimeStamp::getLastTimeStamp)
+          .map(Object::toString)
+          .orElse("null");
     }
 }

@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import static com.commercetools.paymenttoorderprocessor.fixtures.PaymentFixtures.EURO_20;
+import static com.commercetools.paymenttoorderprocessor.fixtures.PaymentFixtures.EUR_20;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -51,7 +51,7 @@ public class MessageReaderIntegrationTest extends IntegrationTest {
         PaymentFixtures.withPayment(testClient, payment-> {
 
             //Preconditions create message in commercetoolsplatform:
-            final TransactionDraft transactionDraft = TransactionDraftBuilder.of(TransactionType.AUTHORIZATION, EURO_20).build();
+            final TransactionDraft transactionDraft = TransactionDraftBuilder.of(TransactionType.AUTHORIZATION, EUR_20).build();
             final AddTransaction addTransaction = AddTransaction.of(transactionDraft);
             final Payment paymentWithTransaction = testClient.executeBlocking(PaymentUpdateCommand.of(payment, addTransaction));
             assertThat(paymentWithTransaction.getTransactions().get(0).getState()).isEqualTo(TransactionState.PENDING);

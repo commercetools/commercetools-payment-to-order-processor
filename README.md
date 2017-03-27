@@ -27,9 +27,8 @@ Example part of a shell script:
 export CTP_CREDENTIALS_CLIENTID=...
 export CTP_CREDENTIALS_CLIENTSECRET=...
 export CTP_CREDENTIALS_PROJECTKEY=...
-export CREATEORDER_ENCRYPTIONKEY=YOUR_SECRET_ENCRYPTION_KEY
+export CREATEORDER_ENCRYPTION_SECRET=YOUR_SECRET_ENCRYPTION_KEY
 export CREATEORDER_ENDPOINT_URL=https://localhost/createOrder
-export CREATEORDER_ENDPOINT_AUTHENTICATION=<username>:<password> (optional)
 ```
 
 ### Optional values
@@ -38,6 +37,7 @@ export CREATEORDER_ENDPOINT_AUTHENTICATION=<username>:<password> (optional)
 * timeout for requests to the platform
 * the time overlap prior to lastproccessed timestamp -> to eliminate problems at edge cases
 * the container for the custom object (saving the timestamp)
+* basic HTTP authentication for create order API endpoint
 
 Example part of a shell script:
 ```
@@ -45,6 +45,7 @@ export CREATEORDER_CREATEORDERON=AUTHORIZATION,CHARGE
 export CTP_TIMEOUT=30000
 export CTP_MESSAGEREADER_MINUTESOVERLAPPING=2
 export CTP_CUSTOM_OBJECT_CONTAINERNAME=commercetools-payment-to-order-processor
+export CREATEORDER_ENDPOINT_AUTHENTICATION=<username>:<password>
 ```
 
 # Build and release

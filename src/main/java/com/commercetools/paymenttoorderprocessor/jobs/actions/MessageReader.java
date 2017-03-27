@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Value;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -82,7 +81,7 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
                 .filter(message -> messageProcessedManager.isMessageUnprocessed(message))
                 .collect(Collectors.toList());
 
-        LOG.info("{} of {} messages on current page are unprocessed", messages.size(), result.size());
+        LOG.info("total {} messages, {} on current page, {} of them are are unprocessed", total, result.size(), messages.size());
     }
 
 
@@ -93,7 +92,7 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
         //Get the total workload from first Query
         if (!wasInitialQueried) {
             total = result.getTotal();
-            LOG.info("First Query returned {} results.", total);
+            LOG.debug("First Query returned {} results.", total);
         }
         //Due to nondeterministic ordering of messages with same timestamp we fetch next pages with overlap
         offset = result.getOffset() + RESULTSPERPAGE - PAGEOVERLAP;
@@ -109,10 +108,10 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
                 .withSort(m -> m.lastModifiedAt().sort().asc())
                 .withOffset(offset)
                 .withLimit(RESULTSPERPAGE);
-        final Optional<ZonedDateTime> timestamp = timeStampManager.getLastProcessedMessageTimeStamp();
-        if (timestamp.isPresent()) {
+        final ZonedDateTime timestamp = timeStampManager.getLastProcessedMessageTimeStamp();
+        if (timestamp != null) {
             messageQuery = messageQuery.plusPredicates(
-                    m -> m.lastModifiedAt().isGreaterThan(timestamp.get().minusMinutes(minutesOverlapping)));
+                    m -> m.lastModifiedAt().isGreaterThan(timestamp.minusMinutes(minutesOverlapping)));
         }
     }
 }

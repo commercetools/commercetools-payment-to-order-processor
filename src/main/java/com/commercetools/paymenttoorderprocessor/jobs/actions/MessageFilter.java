@@ -52,23 +52,25 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
                         if (isCartAmountEqualToTransaction(cart, payment, message)) {
                             return new CartAndMessage(cart, message);
                         } else {
-                            LOG.warn("Cannot create Order for Cart {}. The transactionamout of Transaction {} does not match cart.", cart.getId(), message.getTransactionId());
+                            LOG.error("Cannot create Order for Cart {}. "
+                                       + "The transaction amout of Transaction {} does not match cart.",
+                                        cart.getId(), message.getTransactionId());
                             messageProcessedManager.setMessageIsProcessed(message);
                         }
                     } else {
-                        LOG.info("Cart {} is already orderd nothing to do.", cart.getId());
+                        LOG.debug("Cart {} is already ordered nothing to do.", cart.getId());
                         messageProcessedManager.setMessageIsProcessed(message);
                     }
                 } else {
-                    LOG.warn("There is no cart connected to payment with id {}.", message.getResource().getId());
+                    LOG.error("There is no cart connected to payment with id {}.", message.getResource().getId());
                     messageProcessedManager.setMessageIsProcessed(message);
                 }
             } else {
-                LOG.warn("PaymentTransactionStateChangedMessage {} has not the correct Trasactionstate to be processed.", message.getId());
+                LOG.debug("PaymentTransactionStateChangedMessage {} has not the correct Trasaction state to be processed.", message.getId());
                 messageProcessedManager.setMessageIsProcessed(message);
             }
         } else {
-            LOG.warn("There is no payment in commercetools platform with id {}.", message.getResource().getId());
+            LOG.error("There is no payment in commercetools platform with id {}.", message.getResource().getId());
             messageProcessedManager.setMessageIsProcessed(message);
         }
         return null;

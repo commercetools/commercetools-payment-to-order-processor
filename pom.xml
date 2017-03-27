@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.commercetools.payment-to-order-processor</groupId>
     <artifactId>payment-to-order-processor</artifactId>
-    <version>0.3.4</version>
+    <version>0.4</version>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -53,6 +53,14 @@
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
             <version>1.9</version>
+        </dependency>
+
+        <!-- Compile time validation -->
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.1</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- for tests -->

@@ -1,7 +1,7 @@
 package com.commercetools.paymenttoorderprocessor.timestamp;
 
+import javax.annotation.Nullable;
 import java.time.ZonedDateTime;
-import java.util.Optional;
 
 /**
  * Persists the Timestamp for the last successfully processed Message in the Job.
@@ -9,7 +9,9 @@ import java.util.Optional;
  * @author mht@dotsource.de
  */
 public interface TimeStampManager {
-    public Optional<ZonedDateTime> getLastProcessedMessageTimeStamp();
+
+    @Nullable
+    public ZonedDateTime getLastProcessedMessageTimeStamp();
 
     public void setActualProcessedMessageTimeStamp(ZonedDateTime timeStamp);
 

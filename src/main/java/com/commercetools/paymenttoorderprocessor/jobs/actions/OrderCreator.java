@@ -7,6 +7,8 @@ import io.netty.handler.codec.http.QueryStringEncoder;
 import io.sphere.sdk.carts.Cart;
 import io.sphere.sdk.http.*;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
@@ -41,7 +43,7 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
     /**
      * Must be exactly 16 characters for used {@link #ENCRYPTIONALGORITHM} == Blowfish method.
      */
-    @Value("${createorder.encryptionkey}")
+    @Value("${createorder.encryption.secret}")
     private String encryptionKey;
 
     /**
@@ -71,6 +73,14 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
      */
     @Value("${ctp.createOrderApi.timeout:40000}")
     private Integer createOrderTimeout;
+
+    /**
+     * Max number of character to log from API response body.
+     * <p>
+     * <b>Default</b>: 500 symbols.
+     */
+    @Value("${createorder.response.loggingLengthLimit:500}")
+    private Integer responseBodyLogLimit;
 
     @Override
     public void write(List<? extends CartAndMessage> items) {
@@ -106,14 +116,26 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
             httpResponse = httpClient.execute(httpRequest).toCompletableFuture()
                     .get(createOrderTimeout, TimeUnit.MILLISECONDS);
 
+            String responseBodyToLog = getResponseBodyToLog(httpResponse.getResponseBody());
+
             if (httpResponse.hasSuccessResponseCode()) {
+                if (ObjectUtils.compare(httpResponse.getStatusCode(), HttpStatusCode.CREATED_201) == 0) {
+                    // normal case: cart is created successfully
+                    LOG.info("Success with status {}. Processed cart id=[{}], created order id=[{}]",
+                            httpResponse.getStatusCode(), cartAndMessage.getCart().getId(), responseBodyToLog);
+                } else {
+                    // the request is finished successfully, but this cart can't be processed.
+                    // this case should be reported, but not re-tried any more
+                    LOG.info("Request is successful with status {}, but order is not created. "
+                                    + "Cart [{}] is not processed. Reason: {} ",
+                            httpResponse.getStatusCode(), cartAndMessage.getCart().getId(), responseBodyToLog);
+                }
+
                 messageProcessedManager.setMessageIsProcessed(cartAndMessage.getMessage());
-                LOG.info("Processed cart id=[{}], created order id=[{}]",
-                        cartAndMessage.getCart().getId(), getStringFromResponseBody(httpResponse.getResponseBody()));
             } else {
+                // request is not successful: should be re-tried later
                 timeStampManager.processingMessageFailed();
-                LOG.warn("Response Code from API was {}, response body: \"{}\"",
-                        httpResponse.getStatusCode(), getStringFromResponseBody(httpResponse.getResponseBody()));
+                LOG.error("Failed with status {}. Reason: {}", httpResponse.getStatusCode(), responseBodyToLog);
             }
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             logErrorAndFailTimestamp(e, "HTTP", urlstring, cart);
@@ -151,6 +173,27 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
         }
 
         return null;
+    }
+
+    /**
+     * Format response body for logging:<ul>
+     * <li>convert <i>byte</i> to {@link String} if possible</li>
+     * <li>if necessary limit String length to {@link #responseBodyLogLimit} adding "..." to the end</li>
+     * </ul>
+     * <p>
+     * So, this function returns a string with length up to <i>responseBodyLogLimit + 3</i> characters.
+     *
+     * @param responseBody byte array to convert to string and output
+     * @return converted and truncated (if necessary) string from the {@code responseBody}
+     */
+    private String getResponseBodyToLog(byte[] responseBody) {
+        String stringFromResponseBody = getStringFromResponseBody(responseBody);
+
+        if (stringFromResponseBody.length() > responseBodyLogLimit) {
+            stringFromResponseBody = StringUtils.left(stringFromResponseBody, responseBodyLogLimit) + "...";
+        }
+
+        return stringFromResponseBody;
     }
 
     /**

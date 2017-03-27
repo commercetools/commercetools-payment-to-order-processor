@@ -1,70 +1,98 @@
 package com.commercetools.paymenttoorderprocessor.testconfiguration;
 
-import java.time.ZonedDateTime;
-import java.util.Optional;
-
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
 import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageFilter;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageReader;
+import com.commercetools.paymenttoorderprocessor.jobs.actions.OrderCreator;
 import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager.PaymentCreationConfigurationManager;
 import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager.PaymentCreationConfigurationManagerImpl;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
-
 import io.sphere.sdk.messages.Message;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
+
+import java.time.ZonedDateTime;
+import java.util.HashSet;
 
 @Configuration
 public class ExtendedTestConfiguration {
+
     @Bean
     public TimeStampManager timeStampManager() {
         return new TimeStampManager() {
-            
+
+            private ZonedDateTime actualProcessedMessageTimeStamp = null;
+
+            //by default just get Messages from last 2 minutes
+            private ZonedDateTime lastProcessedMessageTimeStamp = ZonedDateTime.now().minusMinutes(2L);
+
+            private boolean processingMessageFailed = false;
+
             @Override
             public void setActualProcessedMessageTimeStamp(ZonedDateTime timeStamp) {
-                //not needed in test
+                if (!processingMessageFailed) {
+                    actualProcessedMessageTimeStamp = timeStamp;
+                }
             }
-            
+
             @Override
             public void persistLastProcessedMessageTimeStamp() {
-                //not needed in test
+                lastProcessedMessageTimeStamp = actualProcessedMessageTimeStamp;
             }
-            
+
             @Override
-            public Optional<ZonedDateTime> getLastProcessedMessageTimeStamp() {
-                //just get Messages from last 2 minutes 
-                return Optional.of(ZonedDateTime.now().minusMinutes(2L));
+            public ZonedDateTime getLastProcessedMessageTimeStamp() {
+                return lastProcessedMessageTimeStamp;
             }
 
             @Override
             public void processingMessageFailed() {
-                //not needed in test
+                processingMessageFailed = true;
             }
         };
     }
+
     @Bean
     public MessageProcessedManager messageProcessedManager() {
         return new MessageProcessedManager() {
-            
+
+            private HashSet<Message> processedMessages = new HashSet<>();
+
             @Override
             public void setMessageIsProcessed(Message message) {
-                //not needed in test
+                processedMessages.add(message);
             }
-            
+
             @Override
             public boolean isMessageUnprocessed(Message message) {
-                //get all messages
-                return true;
+                return !processedMessages.contains(message);
             }
         };
     }
-    
-    @Bean PaymentCreationConfigurationManager paymentCreationConfigurationManager() {
+
+    @Bean
+    PaymentCreationConfigurationManager paymentCreationConfigurationManager() {
         return new PaymentCreationConfigurationManagerImpl();
     }
-    
-    @Bean MessageFilter messageProcessor() {
+
+    @Bean
+    MessageFilter messageProcessor() {
         return new MessageFilter();
+    }
+
+    /**
+     * For each test we need own instance of messageReader because its not stateless.
+     */
+    @Bean
+    @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+    public MessageReader messageReader() {
+        return new MessageReader();
+    }
+
+    @Bean
+    public OrderCreator orderCreator() {
+        return new OrderCreator();
     }
 }
