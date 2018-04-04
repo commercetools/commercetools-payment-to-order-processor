@@ -70,11 +70,11 @@ public class MessageProcessorIntegrationTest extends IntegrationTest {
                     .withShippingAddress(address));
             final Cart cartWithPayment = testClient.executeBlocking(CartUpdateCommand.of(cart, AddPayment.of(payment)));
 
-            final TransactionDraft transactionDraft = TransactionDraftBuilder.of(TransactionType.AUTHORIZATION, EUR_20).build();
+            final TransactionDraft transactionDraft = TransactionDraftBuilder.of(TransactionType.AUTHORIZATION, EUR_20).state(TransactionState.INITIAL).build();
             final AddTransaction addTransaction = AddTransaction.of(transactionDraft);
 
             final Payment paymentWithTransaction = testClient.executeBlocking(PaymentUpdateCommand.of(payment, addTransaction));
-            assertThat(paymentWithTransaction.getTransactions().get(0).getState()).isEqualTo(TransactionState.PENDING);
+            assertThat(paymentWithTransaction.getTransactions().get(0).getState()).isEqualTo(TransactionState.INITIAL);
 
             final Transaction transaction = paymentWithTransaction.getTransactions().get(0);
             final ChangeTransactionState changeTransactionState = ChangeTransactionState.of(TransactionState.SUCCESS, transaction.getId());
