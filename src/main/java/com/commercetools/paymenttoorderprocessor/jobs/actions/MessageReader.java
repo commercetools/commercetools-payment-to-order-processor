@@ -94,8 +94,7 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
     private void fetchUnprocessedMessagesFromPlatform() {
         final PagedQueryResult<Message> result = queryPlatform();
         result.getResults().stream()
-                .filter(message -> message instanceof PaymentTransactionStateChangedMessage)
-                .map(message -> (PaymentTransactionStateChangedMessage) message)
+                .map(message -> message.as(PaymentTransactionStateChangedMessage.class))
                 .forEach(message -> {
                     if (messageProcessedManager.isMessageUnprocessed(message)) {
                         unprocessedMessagesQueue.add(message);

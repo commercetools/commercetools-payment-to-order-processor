@@ -54,20 +54,23 @@ public class ExtendedTestConfiguration {
         };
     }
 
+    /**
+     * Simulate "processed" message status by message ID saving.
+     */
     @Bean
     public MessageProcessedManager messageProcessedManager() {
         return new MessageProcessedManager() {
 
-            private HashSet<Message> processedMessages = new HashSet<>();
+            private HashSet<String> processedMessages = new HashSet<>();
 
             @Override
             public void setMessageIsProcessed(Message message) {
-                processedMessages.add(message);
+                processedMessages.add(message.getId());
             }
 
             @Override
             public boolean isMessageUnprocessed(Message message) {
-                return !processedMessages.contains(message);
+                return !processedMessages.contains(message.getId());
             }
         };
     }

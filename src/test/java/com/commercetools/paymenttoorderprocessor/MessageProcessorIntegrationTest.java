@@ -106,7 +106,7 @@ public class MessageProcessorIntegrationTest extends IntegrationTest {
 
             // when MessageFilter.process() returns CartAndMessage instance - timestamp is not updated
             timeStampManager.persistLastProcessedMessageTimeStamp();
-            assertThat(timeStampManager.getLastProcessedMessageTimeStamp()).isNotEqualTo(message[0].getLastModifiedAt());
+            assertThat(timeStampManager.getLastProcessedMessageTimeStamp()).isNull();
 
             return paymentWithTransactionStateChange;
         });
