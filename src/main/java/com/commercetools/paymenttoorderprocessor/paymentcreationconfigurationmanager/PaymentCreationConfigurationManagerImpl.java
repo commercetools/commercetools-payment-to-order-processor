@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Arrays;
 
+import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
+
 public class PaymentCreationConfigurationManagerImpl implements PaymentCreationConfigurationManager {
 
     @Value("${createorder.createorderon}")
@@ -18,6 +20,6 @@ public class PaymentCreationConfigurationManagerImpl implements PaymentCreationC
         return TransactionState.SUCCESS.equals(message.getState())
                 && (payment.getTransactions().stream().anyMatch(
                 transaction -> transactionID.equals(transaction.getId())
-                        && Arrays.stream(transactionTypes).anyMatch(type -> type.equals(transaction.getType().toString()))));
+                        && Arrays.stream(transactionTypes).anyMatch(type -> equalsIgnoreCase(type, transaction.getType().toString()))));
     }
 }
