@@ -70,7 +70,7 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
                     messageProcessedManager.setMessageIsProcessed(message);
                 }
             } else {
-                LOG.debug("PaymentTransactionStateChangedMessage {} has incorrect Transaction state to be processed.", message.getId());
+                LOG.debug("PaymentTransactionStateChangedMessage {} has incorrect transaction state to be processed.", message.getId());
                 messageProcessedManager.setMessageIsProcessed(message);
             }
         } else {
