@@ -65,7 +65,34 @@ export IT_CLIENT_SECRET=
 mvn clean test
 ```
 
+## Travis build settings
+
 For Travis CI use [build settings page](https://travis-ci.org/commercetools/commercetools-payment-to-order-processor/settings).
+
+## Local run and debug
+
+Follow the documentation how to run
+[Spring Boot Maven Plugin](https://docs.spring.io/spring-boot/docs/current/maven-plugin/examples/run-debug.html) 
+
+Additionally to simplify build:
+  
+  - in _Intellij IDEA_: use `Run/Debug` configuration to run `PaymentToOrderApplication` class.
+  
+  - it is possible to simplify Spring configuration avoiding environment variables setup:
+  
+    following Spring [24.3 Application Property Files](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-external-config.html#boot-features-external-config-application-property-files)
+    order it is easy and flexible to override default (environment variables) configuration 
+    using custom local `application.properties` file. For this copy file
+    [`src/main/resources/config/application.properties.skeleton`](/src/main/resources/config/application.properties.skeleton)
+    to `application.properties` and fill required values.
+    
+    ```bash
+    cp -i src/main/resources/config/application.properties.skeleton src/main/resources/config/application.properties
+    ```
+    
+    The same approach could be used to _Run/Debug_ tests and integration tests locally, 
+    but respectively in `/src/test/resources/config/` directory.
+
 
 ## Docker image
 Following Docker images (tags) are created after successful Travis CI build:

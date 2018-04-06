@@ -1,0 +1,26 @@
+# THIS ID DEV CONFIGURATION, WHICH HAS PRECEDENCE OVER application.conf FROM THE ROOT
+# see https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-external-config.html#boot-features-external-config-application-property-files
+# **NOTE**: FILLED FILE application.properties SHOULD **NOT** BE COMMITTED TO THE REPO
+
+# FILL THESE VALUES BEFORE LOCAL RUN
+ctp.credentials.projectkey=payment-to-order-processor-7
+ctp.credentials.clientid=<<FIND_IN_MERCHANT_CENTER>>
+ctp.credentials.clientsecret=<<FIND_IN_MERCHANT_CENTER>>
+
+# Override following properties when needed some specific debug config
+
+ctp.timeout=30000
+
+#defines the time overlap prior to lastprocessedtimestamp
+ctp.messagereader.minutesoverlapping=2
+
+#configuration that is used for custom-object at platform
+ctp.custom.object.containername=commercetools-payment-to-order-processor
+
+createorder.createorderon=AUTHORIZATION,CHARGE
+
+spring.main.banner-mode=off
+
+createorder.encryption.secret=aaaaaaaaaaaaaaaa
+createorder.endpoint.url=http://test.host/API/createOrder
+
