@@ -51,6 +51,15 @@ public class MessageReaderTest {
             new TypeReference<PagedQueryResult<PaymentTransactionStateChangedMessage>>() {
             };
 
+    private static final PagedQueryResult<PaymentTransactionStateChangedMessage> emptyMessagesResult =
+            SphereJsonUtils.readObjectFromResource(MOCKS + "messagesResult_empty.json", PagedQueryWithMessages);
+
+    private static final PagedQueryResult<PaymentTransactionStateChangedMessage> firstMessagesResult =
+            SphereJsonUtils.readObjectFromResource(MOCKS + "messagesResult_1.json", PagedQueryWithMessages);
+
+    private static final PagedQueryResult<PaymentTransactionStateChangedMessage> secondMessagesResult =
+            SphereJsonUtils.readObjectFromResource(MOCKS + "messagesResult_2.json", PagedQueryWithMessages);
+
     @Autowired
     private MessageReader messageReader;
 
@@ -65,16 +74,22 @@ public class MessageReaderTest {
 
     @Test
     public void read_whenEmpty_returnsNull() {
-        when(client.executeBlocking(any())).thenReturn(SphereJsonUtils.readObjectFromResource(MOCKS + "messagesResult_empty.json",
-                PagedQueryWithMessages));
+
+        when(client.executeBlocking(any())).thenReturn(emptyMessagesResult);
 
         assertThat(messageReader.read()).isNull();
     }
 
     @Test
     public void read_whenOnePage_returnsResultFromThePage() {
-        when(client.executeBlocking(any())).thenReturn(SphereJsonUtils.readObjectFromResource(MOCKS + "messagesResult_1.json",
-                PagedQueryWithMessages));
+        when(client.executeBlocking(any())).thenAnswer(a -> {
+            MessageQuery query = a.getArgumentAt(0, MessageQuery.class);
+            if (query.offset() == 0) {
+                return firstMessagesResult;
+            } else {
+                return emptyMessagesResult;
+            }
+        });
         PaymentTransactionStateChangedMessage firstUnprocessedMessage = messageReader.read();
         assertThat(firstUnprocessedMessage).isNotNull();
         assertThat(firstUnprocessedMessage.getId()).isEqualTo("11111111-1111-1111-1111-111111111111");
@@ -83,9 +98,11 @@ public class MessageReaderTest {
         assertThat(secondUnprocessedMessage).isNotNull();
         assertThat(secondUnprocessedMessage.getId()).isEqualTo("44444444-4444-4444-4444-444444444444");
 
-        // sphere client should be called only once even if we call messageReader.read twice,
-        // because both results are on the same page
-        verify(client, times(1)).executeBlocking(any());
+        assertThat(messageReader.read()).isNull(); // empty queue after first page
+
+        // sphere client should be called only twice (first and empty result page)
+        // even if we call messageReader.read 3 times, because both results are on the same page first page
+        verify(client, times(2)).executeBlocking(any());
 
         // no messages processed - last timestamp is not updated
         timeStampManager.persistLastProcessedMessageTimeStamp();
@@ -94,21 +111,11 @@ public class MessageReaderTest {
 
     @Test
     public void read_whenFirstPageIsEmpty_returnsResultFromSecondPage_AndPersistsTimestamp() {
-        PagedQueryResult<PaymentTransactionStateChangedMessage> pagedFirstResult = SphereJsonUtils.readObjectFromResource(MOCKS + "messagesResult_1.json",
-                PagedQueryWithMessages);
-        PagedQueryResult<PaymentTransactionStateChangedMessage> pagedSecondResult = SphereJsonUtils.readObjectFromResource(MOCKS + "messagesResult_2.json",
-                PagedQueryWithMessages);
-        List<PaymentTransactionStateChangedMessage> firstResults = pagedFirstResult.getResults();
+        // mark results from the first page as processed
+        List<PaymentTransactionStateChangedMessage> firstResults = firstMessagesResult.getResults();
         firstResults.forEach(messageProcessedManager::setMessageIsProcessed);
 
-        when(client.executeBlocking(any(MessageQuery.class))).thenAnswer(a -> {
-            MessageQuery query = a.getArgumentAt(0, MessageQuery.class);
-            if (query.offset() == 0) {
-                return pagedFirstResult;
-            } else {
-                return pagedSecondResult;
-            }
-        });
+        mock2PagesResult(client, messageReader);
 
         PaymentTransactionStateChangedMessage firstMessage = messageReader.read();
         assertThat(firstMessage).isNotNull();
@@ -118,12 +125,56 @@ public class MessageReaderTest {
         assertThat(secondMessage).isNotNull();
         assertThat(secondMessage.getId()).isEqualTo("444");
 
-        // sphere client called twice to fetch 2 pages
-        verify(client, times(2)).executeBlocking(any());
+        assertThat(messageReader.read()).isNull(); // empty queue after second page
+
+        // sphere client called 3 to fetch 2 filled and 1 empty pages
+        verify(client, times(3)).executeBlocking(any());
 
         // verify last timestamp is equal to last processed message
         PaymentTransactionStateChangedMessage lastResultOnFirstPage = firstResults.get(firstResults.size() - 1);
         timeStampManager.persistLastProcessedMessageTimeStamp();
         assertThat(timeStampManager.getLastProcessedMessageTimeStamp()).isEqualTo(lastResultOnFirstPage.getLastModifiedAt());
+    }
+
+    @Test
+    public void read_someResultsAreProcessedOnFirstAndSecondPage_returnsResultFromFirstAndSecondPage_AndPersistsTimestamp() {
+        // mark one result from first and one from second page as processed
+        List<PaymentTransactionStateChangedMessage> firstResults = firstMessagesResult.getResults();
+        List<PaymentTransactionStateChangedMessage> secondResults = secondMessagesResult.getResults();
+        messageProcessedManager.setMessageIsProcessed(firstResults.get(0));
+        PaymentTransactionStateChangedMessage lastMessage = secondResults.get(1);
+        messageProcessedManager.setMessageIsProcessed(lastMessage);
+
+        mock2PagesResult(client, messageReader);
+
+        PaymentTransactionStateChangedMessage firstMessage = messageReader.read();
+        assertThat(firstMessage).isNotNull();
+        assertThat(firstMessage.getId()).isEqualTo("44444444-4444-4444-4444-444444444444");
+
+        PaymentTransactionStateChangedMessage secondMessage = messageReader.read();
+        assertThat(secondMessage).isNotNull();
+        assertThat(secondMessage.getId()).isEqualTo("111");
+
+        assertThat(messageReader.read()).isNull(); // empty queue after second page
+
+        // sphere client called 3 to fetch 2 filled and 1 empty pages
+        verify(client, times(3)).executeBlocking(any());
+
+        // verify last timestamp is equal to last processed message
+        timeStampManager.persistLastProcessedMessageTimeStamp();
+        assertThat(timeStampManager.getLastProcessedMessageTimeStamp()).isEqualTo(lastMessage.getLastModifiedAt());
+    }
+
+    private void mock2PagesResult(final BlockingSphereClient client, final MessageReader messageReader) {
+        when(client.executeBlocking(any(MessageQuery.class))).thenAnswer(a -> {
+            MessageQuery query = a.getArgumentAt(0, MessageQuery.class);
+            if (query.offset() == 0) {
+                return firstMessagesResult;
+            } else if (query.offset() <= (messageReader.RESULTSPERPAGE - messageReader.PAGEOVERLAP)) {
+                return secondMessagesResult;
+            } else {
+                return emptyMessagesResult;
+            }
+        });
     }
 }

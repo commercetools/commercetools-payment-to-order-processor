@@ -50,8 +50,8 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
     private boolean wasInitialQueried = false;
     private long total;
     private long offset = 0L;
-    private final int RESULTSPERPAGE = 500;
-    private final int PAGEOVERLAP = 5;
+    final int RESULTSPERPAGE = 500;
+    final int PAGEOVERLAP = 5;
 
     /**
      * @return the oldest unprocessed message from the queue, or <b>null</b> if no new messages to process in CTP.
