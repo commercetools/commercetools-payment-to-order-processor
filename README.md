@@ -1,4 +1,23 @@
+# commercetools-payment-to-order-processor Service
+
 [![Build Status](https://travis-ci.org/commercetools/commercetools-payment-to-order-processor.svg?branch=dev-docker-build)](https://travis-ci.org/commercetools/commercetools-payment-to-order-processor)
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+  - [Goal of the service](#goal-of-the-service)
+  - [Creating the order](#creating-the-order)
+  - [Using this service](#using-this-service)
+  - [Congfiguration values](#congfiguration-values)
+    - [Required values](#required-values)
+    - [Optional values](#optional-values)
+- [Build and release](#build-and-release)
+  - [Build](#build)
+  - [Run tests](#run-tests)
+  - [Travis build settings](#travis-build-settings)
+  - [Local run and debug](#local-run-and-debug)
+  - [Docker image](#docker-image)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## Goal of the service
 In general orders are created from carts by the frontend. For redirect payments like Credit card 3D Secure, Paypal or Sofortüberweisung shop front end is confronted with an issue that in some cases there is a valid payment but no order as user did not reach front end's success URL, which creates an order from current cart. One of the use cases would be lost internet connection or accidentally closed tab after successfully issued payment. Scheduled processor ensures that for every successful payment and valid cart an order can be still asynchronously created. More details on the process can be found [here](https://github.com/commercetools/commercetools-payment-to-order-processor/blob/master/doc/REQUIREMENTS.MD)
