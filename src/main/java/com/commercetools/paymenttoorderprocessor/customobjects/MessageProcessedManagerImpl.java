@@ -7,8 +7,6 @@ import io.sphere.sdk.customobjects.commands.CustomObjectUpsertCommand;
 import io.sphere.sdk.customobjects.queries.CustomObjectQuery;
 import io.sphere.sdk.messages.Message;
 import io.sphere.sdk.queries.PagedQueryResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -20,8 +18,6 @@ import java.util.List;
  * @author mht@dotsource.de
  */
 public class MessageProcessedManagerImpl implements MessageProcessedManager {
-
-    public static final Logger LOG = LoggerFactory.getLogger(MessageProcessedManagerImpl.class);
 
     @Autowired
     private BlockingSphereClient client;

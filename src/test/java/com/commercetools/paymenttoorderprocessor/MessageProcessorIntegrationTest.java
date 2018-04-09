@@ -6,6 +6,7 @@ import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageFilter;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageReader;
 import com.commercetools.paymenttoorderprocessor.testconfiguration.BasicTestConfiguration;
 import com.commercetools.paymenttoorderprocessor.testconfiguration.ExtendedTestConfiguration;
+import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
 import com.commercetools.paymenttoorderprocessor.wrapper.CartAndMessage;
 import com.neovisionaries.i18n.CountryCode;
 import io.sphere.sdk.carts.Cart;
@@ -28,7 +29,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.ConfigFileApplicationContextInitializer;
-import org.springframework.boot.test.context.SpringBootContextLoader;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -42,8 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {BasicTestConfiguration.class, ExtendedTestConfiguration.class,
         ShereClientConfiguration.class},
-        initializers = ConfigFileApplicationContextInitializer.class,
-        loader = SpringBootContextLoader.class)
+        initializers = ConfigFileApplicationContextInitializer.class)
 public class MessageProcessorIntegrationTest extends IntegrationTest {
 
     @Autowired
@@ -54,6 +53,9 @@ public class MessageProcessorIntegrationTest extends IntegrationTest {
 
     @Autowired
     private BlockingSphereClient testClient;
+
+    @Autowired
+    private TimeStampManager timeStampManager;
 
     @Test
     public void messageProcessorSuccess() throws Exception {
@@ -101,6 +103,10 @@ public class MessageProcessorIntegrationTest extends IntegrationTest {
             final Cart cartToTest = cartAndMessage.getCart();
             assertThat(cartToTest).isNotNull();
             assertThat(cartToTest.getId()).isEqualTo(cartWithPayment.getId());
+
+            // when MessageFilter.process() returns CartAndMessage instance - timestamp is not updated
+            timeStampManager.persistLastProcessedMessageTimeStamp();
+            assertThat(timeStampManager.getLastProcessedMessageTimeStamp()).isNull();
 
             return paymentWithTransactionStateChange;
         });

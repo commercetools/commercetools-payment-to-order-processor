@@ -1,0 +1,38 @@
+{
+  "limit": 2,
+  "offset": 2,
+  "count": 2,
+  "total": 500,
+  "results": [
+    {
+      "id": "111",
+      "version": 1,
+      "sequenceNumber": 9,
+      "resource": {
+        "typeId": "payment",
+        "id": "222"
+      },
+      "resourceVersion": 15,
+      "type": "PaymentTransactionStateChanged",
+      "transactionId": "333",
+      "state": "Success",
+      "createdAt": "2018-04-06T12:34:56.789Z",
+      "lastModifiedAt": "2018-04-06T12:34:56.789Z"
+    },
+    {
+      "id": "444",
+      "version": 1,
+      "sequenceNumber": 6,
+      "resource": {
+        "typeId": "payment",
+        "id": "555"
+      },
+      "resourceVersion": 9,
+      "type": "PaymentTransactionStateChanged",
+      "transactionId": "555",
+      "state": "Pending",
+      "createdAt": "2018-04-07T22:22:22.222Z",
+      "lastModifiedAt": "2018-04-07T22:22:22.222Z"
+    }
+  ]
+}

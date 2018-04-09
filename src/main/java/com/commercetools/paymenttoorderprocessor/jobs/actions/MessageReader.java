@@ -13,10 +13,11 @@ import org.springframework.batch.item.ItemReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.time.ZonedDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.ArrayDeque;
+import java.util.Queue;
 
 /**
  * Reads PaymentTransactionStateChangedMessages from the commercetools platform.
@@ -43,51 +44,72 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
     @Value("${ctp.messagereader.minutesoverlapping}")
     private Integer minutesOverlapping;
 
-    private List<PaymentTransactionStateChangedMessage> messages = Collections.emptyList();
+    @Nonnull
+    private Queue<PaymentTransactionStateChangedMessage> unprocessedMessagesQueue = new ArrayDeque<>();
+
     private boolean wasInitialQueried = false;
     private long total;
     private long offset = 0L;
-    private final int RESULTSPERPAGE = 500;
-    private final int PAGEOVERLAP = 5;
+    final int RESULTS_PER_PAGE = 500;
+    final int PAGE_OVERLAP = 5;
 
-    private MessageQuery messageQuery;
-
+    /**
+     * @return the oldest unprocessed message from the queue, or <b>null</b> if no new messages to process in CTP.
+     */
     @Override
+    @Nullable
     public PaymentTransactionStateChangedMessage read() {
         LOG.debug("wasInitialQueried: {}", wasInitialQueried);
-        if (isQueryNeeded()) {
-            getUnprocessedMessagesFromPlatform();
+
+        while (isQueryNeeded()) {
+            fetchUnprocessedMessagesFromPlatform();
         }
-        return getMessageFromList();
+
+        return getUnprocessedMessageFromQueue();
     }
 
-    private PaymentTransactionStateChangedMessage getMessageFromList() {
-        if (messages.isEmpty()) {
-            return null;
-        } else {
-            timeStampManager.setActualProcessedMessageTimeStamp(messages.get(0).getLastModifiedAt());
-            return messages.remove(0);
-        }
+    /**
+     * @return oldest unprocessed message from the queue if exists, or <b>null</b>
+     */
+    @Nullable
+    private PaymentTransactionStateChangedMessage getUnprocessedMessageFromQueue() {
+        return unprocessedMessagesQueue.poll();
     }
 
+    /**
+     * A first or next CTP query is needed if we don't have unprocessed messages in the queue.
+     *
+     * @return <b>true</b> if messages queue never fetched or {@code unprocessedMessagesQueue} is empty and CTP still
+     * has items to fetch (query next page).
+     */
     private boolean isQueryNeeded() {
-        return !wasInitialQueried || (messages.isEmpty() && total > offset);
+        return !wasInitialQueried || (unprocessedMessagesQueue.isEmpty() && total > offset);
     }
 
-    private void getUnprocessedMessagesFromPlatform() {
-        final List<Message> result = queryPlatform();
-        messages = result.stream()
+    /**
+     * Fetch messages from the platform and put all unprocessed messages to {@code unprocessedMessagesQueue}.
+     * Also, update {@link TimeStampManager#setActualProcessedMessageTimeStamp(java.time.ZonedDateTime)
+     * actualProcessedMessageTimeStamp} for processed messages.
+     */
+    private void fetchUnprocessedMessagesFromPlatform() {
+        final PagedQueryResult<Message> result = queryPlatform();
+        result.getResults().stream()
                 .map(message -> message.as(PaymentTransactionStateChangedMessage.class))
-                .filter(message -> messageProcessedManager.isMessageUnprocessed(message))
-                .collect(Collectors.toList());
+                .forEach(message -> {
+                    if (messageProcessedManager.isMessageUnprocessed(message)) {
+                        unprocessedMessagesQueue.add(message);
+                    } else {
+                        timeStampManager.setActualProcessedMessageTimeStamp(message.getLastModifiedAt());
+                    }
+                });
 
-        LOG.info("total {} messages, {} on current page, {} of them are are unprocessed", total, result.size(), messages.size());
+        LOG.info("fetched messages [{}-{}] of total {}, {} of them are are unprocessed",
+                result.getOffset() + 1, result.getOffset() + result.getCount(), result.getTotal(), unprocessedMessagesQueue.size());
     }
 
-
-    private List<Message> queryPlatform() {
+    private PagedQueryResult<Message> queryPlatform() {
         LOG.debug("Query CTP for Messages");
-        buildQuery();
+        final MessageQuery messageQuery = buildQuery();
         final PagedQueryResult<Message> result = client.executeBlocking(messageQuery);
         //Get the total workload from first Query
         if (!wasInitialQueried) {
@@ -95,23 +117,28 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
             LOG.debug("First Query returned {} results.", total);
         }
         //Due to nondeterministic ordering of messages with same timestamp we fetch next pages with overlap
-        offset = result.getOffset() + RESULTSPERPAGE - PAGEOVERLAP;
+        offset = result.getOffset() + RESULTS_PER_PAGE - PAGE_OVERLAP;
         wasInitialQueried = true;
-        return result.getResults();
+        return result;
     }
 
 
     //Due to eventual consistency messages could be created with a delay. Fetching several minutes prior last Timestamp
-    private void buildQuery() {
-        messageQuery = MessageQuery.of()
+    private MessageQuery buildQuery() {
+
+        MessageQuery messageQuery = MessageQuery.of()
                 .withPredicates(m -> m.type().is(MESSAGETYPE))
                 .withSort(m -> m.lastModifiedAt().sort().asc())
                 .withOffset(offset)
-                .withLimit(RESULTSPERPAGE);
+                .withLimit(RESULTS_PER_PAGE);
+
         final ZonedDateTime timestamp = timeStampManager.getLastProcessedMessageTimeStamp();
+
         if (timestamp != null) {
             messageQuery = messageQuery.plusPredicates(
                     m -> m.lastModifiedAt().isGreaterThan(timestamp.minusMinutes(minutesOverlapping)));
         }
+
+        return messageQuery;
     }
 }

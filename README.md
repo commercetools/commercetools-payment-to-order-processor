@@ -35,6 +35,28 @@ docker run commercetools/payment-to-order-processor:latest
 ```
 Sevice has to be scheduled and executed i.e.: every 5 minutes. This can be achieved by using simple cron or services like iron.io.
 
+### Configure first processed message time bound
+
+If the service runs for the first time by default the service tries to fetch **ALL** the messages from the project,
+which is usually not intended/expected and a customer wants to process payments only for the last couple of days/hours.
+
+In this case **`lastUpdated`** key should be set in
+[Custom Objects](https://docs.commercetools.com/http-api-projects-custom-objects.html#custom-objects)
+endpoint to desired _first processed message (payment)_ time limit.
+
+In the example below we want to start messages processing from _Friday, April 6, 2018 00:00:00 GMT_
+(**Note**: CTP stores dates in GMT timezone)
+
+```json
+{
+  "container": "commercetools-payment-to-order-processor",
+  "key": "lastUpdated",
+  "value": {
+    "lastTimeStamp": "2018-04-06T00:00:00.000Z"
+  }
+}
+```
+
 ## Congfiguration values
 ### Required values
 

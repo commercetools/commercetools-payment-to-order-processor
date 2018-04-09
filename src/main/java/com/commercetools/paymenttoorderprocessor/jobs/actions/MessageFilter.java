@@ -2,6 +2,7 @@ package com.commercetools.paymenttoorderprocessor.jobs.actions;
 
 import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
 import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager.PaymentCreationConfigurationManager;
+import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
 import com.commercetools.paymenttoorderprocessor.wrapper.CartAndMessage;
 import io.sphere.sdk.carts.Cart;
 import io.sphere.sdk.carts.CartState;
@@ -39,6 +40,9 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
     @Autowired
     private PaymentCreationConfigurationManager paymentCreationConfigurationManager;
 
+    @Autowired
+    private TimeStampManager timeStampManager;
+
     @Override
     public CartAndMessage process(PaymentTransactionStateChangedMessage message) {
         LOG.debug("Called MessageFilter.process with parameter {}", message);
@@ -66,13 +70,18 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
                     messageProcessedManager.setMessageIsProcessed(message);
                 }
             } else {
-                LOG.debug("PaymentTransactionStateChangedMessage {} has not the correct Trasaction state to be processed.", message.getId());
+                LOG.debug("PaymentTransactionStateChangedMessage {} has incorrect transaction state to be processed.", message.getId());
                 messageProcessedManager.setMessageIsProcessed(message);
             }
         } else {
             LOG.error("There is no payment in commercetools platform with id {}.", message.getResource().getId());
             messageProcessedManager.setMessageIsProcessed(message);
         }
+
+        // we tried to do all possible jobs. If CartAndMessage is not returned above -
+        // don't try to process this message next time
+        timeStampManager.setActualProcessedMessageTimeStamp(message.getLastModifiedAt());
+
         return null;
     }
 
