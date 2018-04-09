@@ -18,7 +18,7 @@ Sevice has to be scheduled and executed i.e.: every 5 minutes. This can be achie
 
 ### Configure first processed message time bound
 
-If run the service first time by default the service tries to fetch **ALL** the messages from the project,
+If the service runs for the first time by default the service tries to fetch **ALL** the messages from the project,
 which is usually not intended/expected and a customer wants to process payments only for the last couple of days/hours.
 
 In this case **`lastUpdated`** key should be set in
