@@ -1,0 +1,39 @@
+# THIS ID DEV CONFIGURATION, WHICH HAS PRECEDENCE OVER application.conf FROM THE ROOT
+# see https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-external-config.html#boot-features-external-config-application-property-files
+# **NOTE**: FILLED FILE application.properties SHOULD **NOT** BE COMMITTED TO THE REPO
+
+# FILL THESE VALUES BEFORE LOCAL RUN
+ctp.credentials.projectkey=
+ctp.credentials.clientid=
+ctp.credentials.clientsecret=
+createorder.encryption.secret=
+createorder.endpoint.url=
+createorder.endpoint.authentication=<<LOGIN>>:<<PASSWORD>>
+
+
+# Override following properties when needed some specific debug config
+
+createorder.response.loggingLengthLimit=20
+ctp.timeout=30000
+
+# for debugging purpose is very high
+ctp.createOrderApi.timeout=600000
+
+#defines the time overlap prior to lastprocessedtimestamp
+ctp.messagereader.minutesoverlapping=2
+
+#configuration that is used for custom-object at platform
+ctp.custom.object.containername=commercetools-payment-to-order-processor
+
+createorder.createorderon=AUTHORIZATION,CHARGE
+
+spring.main.banner-mode=off
+
+
+logging.level.root=INFO
+logging.pattern.console=%date{HH:mm:ss} [%thread] %highlight(%-5level) %cyan(%logger{16}) : %message%n%xThrowable{10}
+logging.level.org.springframework=WARN
+
+# these 2 classes produce unnecessary warning about Beans mapping and default datasource absence.
+logging.level.org.springframework.context.annotation.ConfigurationClassEnhancer=ERROR
+logging.level.org.springframework.batch.core.configuration.annotation.DefaultBatchConfigurer=ERROR
