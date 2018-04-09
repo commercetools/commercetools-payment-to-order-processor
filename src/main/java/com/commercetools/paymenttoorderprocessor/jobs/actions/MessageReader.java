@@ -50,8 +50,8 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
     private boolean wasInitialQueried = false;
     private long total;
     private long offset = 0L;
-    final int RESULTSPERPAGE = 500;
-    final int PAGEOVERLAP = 5;
+    final int RESULTS_PER_PAGE = 500;
+    final int PAGE_OVERLAP = 5;
 
     /**
      * @return the oldest unprocessed message from the queue, or <b>null</b> if no new messages to process in CTP.
@@ -117,7 +117,7 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
             LOG.debug("First Query returned {} results.", total);
         }
         //Due to nondeterministic ordering of messages with same timestamp we fetch next pages with overlap
-        offset = result.getOffset() + RESULTSPERPAGE - PAGEOVERLAP;
+        offset = result.getOffset() + RESULTS_PER_PAGE - PAGE_OVERLAP;
         wasInitialQueried = true;
         return result;
     }
@@ -130,7 +130,7 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
                 .withPredicates(m -> m.type().is(MESSAGETYPE))
                 .withSort(m -> m.lastModifiedAt().sort().asc())
                 .withOffset(offset)
-                .withLimit(RESULTSPERPAGE);
+                .withLimit(RESULTS_PER_PAGE);
 
         final ZonedDateTime timestamp = timeStampManager.getLastProcessedMessageTimeStamp();
 

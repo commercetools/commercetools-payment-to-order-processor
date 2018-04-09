@@ -170,7 +170,7 @@ public class MessageReaderTest {
             MessageQuery query = a.getArgumentAt(0, MessageQuery.class);
             if (query.offset() == 0) {
                 return firstMessagesResult;
-            } else if (query.offset() <= (messageReader.RESULTSPERPAGE - messageReader.PAGEOVERLAP)) {
+            } else if (query.offset() <= (messageReader.RESULTS_PER_PAGE - messageReader.PAGE_OVERLAP)) {
                 return secondMessagesResult;
             } else {
                 return emptyMessagesResult;
