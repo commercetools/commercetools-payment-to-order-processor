@@ -8,4 +8,4 @@
 # For release environment use application.properties in the root of classpath (resources/ directory)
 # see https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-external-config.html#boot-features-external-config-application-property-files for details
 **/resources/config/application.properties
-/.idea/
+.idea
