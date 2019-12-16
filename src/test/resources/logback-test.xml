@@ -1,23 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!-- Spring boot testing has very early initialization, that's why before applying logging properties from
      application.properties it makes already a large DEBUG output, that's why, opposite to main app, for the tests
      we use logback-test.xml, but not application.properties -->
-
 <configuration>
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%date{HH:mm:ss} [%thread] %highlight(%-5level) %cyan(%logger{16}) : %message%n
-            </pattern>
+    <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+            <layout class="org.springframework.cloud.gcp.logging.StackdriverJsonLayout">
+                <projectId>commercetools-payment-to-order-processor</projectId>
+            </layout>
         </encoder>
     </appender>
-
     <root level="INFO">
-        <appender-ref ref="STDOUT" />
+        <appender-ref ref="CONSOLE_JSON"/>
     </root>
-
-    <!-- suppress over-flood debugging info in the tests:
-         by default spring boot and netty output over 10 thousand lines for just 4 tests!
-         The packages below are the most flooding ones, so use INFO level for them. -->
-    <logger name="org.springframework" level="INFO" />
-    <logger name="io.netty" level="INFO" />
-    <logger name="org.asynchttpclient.netty" level="INFO" />
 </configuration>

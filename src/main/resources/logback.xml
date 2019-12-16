@@ -1,24 +1,18 @@
 <configuration>
-
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>
-                %date{HH:mm:ss} [%thread] %highlight(%-5level) %cyan(%logger{16}) : %message%n%xThrowable{10}
-            </pattern>
+    <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+            <layout class="org.springframework.cloud.gcp.logging.StackdriverJsonLayout">
+                <projectId>commercetools-payment-to-order-processor</projectId>
+            </layout>
         </encoder>
     </appender>
-
-    <appender name="ASYNCSTDOUT" class="ch.qos.logback.classic.AsyncAppender">
-        <appender-ref ref="STDOUT" />
-    </appender>
-
     <root level="INFO">
-        <appender-ref ref="ASYNCSTDOUT" />
+        <appender-ref ref="CONSOLE_JSON"/>
     </root>
 
-    <logger name="org.springframework" level="WARN" />
+    <logger name="org.springframework" level="WARN"/>
 
     <!-- these 2 classes produce unnecessary warning about Beans mapping and default datasource absence. -->
-    <logger name="org.springframework.context.annotation.ConfigurationClassEnhancer" level="ERROR" />
-    <logger name="org.springframework.batch.core.configuration.annotation.DefaultBatchConfigurer" level="ERROR" />
+    <logger name="org.springframework.context.annotation.ConfigurationClassEnhancer" level="ERROR"/>
+    <logger name="org.springframework.batch.core.configuration.annotation.DefaultBatchConfigurer" level="ERROR"/>
 </configuration>
