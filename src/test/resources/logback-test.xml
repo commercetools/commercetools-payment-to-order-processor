@@ -3,21 +3,34 @@
      application.properties it makes already a large DEBUG output, that's why, opposite to main app, for the tests
      we use logback-test.xml, but not application.properties -->
 <configuration>
-    <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
+    <appender name="JSON-STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <target>System.out</target>
         <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
             <layout class="org.springframework.cloud.gcp.logging.StackdriverJsonLayout">
                 <projectId>commercetools-payment-to-order-processor</projectId>
             </layout>
         </encoder>
     </appender>
+    <appender name="JSON-STDERR" class="ch.qos.logback.core.ConsoleAppender">
+        <target>System.err</target>
+        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+            <layout class="org.springframework.cloud.gcp.logging.StackdriverJsonLayout">
+                <projectId>commercetools-payment-to-order-processor</projectId>
+            </layout>
+        </encoder>
+    </appender>
+    <appender name="ASYNCSTDOUT" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="JSON-STDOUT"/>
+        <appender-ref ref="JSON-STDERR"/>
+    </appender>
     <root level="INFO">
-        <appender-ref ref="CONSOLE_JSON"/>
+        <appender-ref ref="ASYNCSTDOUT"/>
     </root>
 
     <!-- suppress over-flood debugging info in the tests:
          by default spring boot and netty output over 10 thousand lines for just 4 tests!
          The packages below are the most flooding ones, so use INFO level for them. -->
-    <logger name="org.springframework" level="INFO" />
-    <logger name="io.netty" level="INFO" />
-    <logger name="org.asynchttpclient.netty" level="INFO" />
+    <logger name="org.springframework" level="INFO"/>
+    <logger name="io.netty" level="INFO"/>
+    <logger name="org.asynchttpclient.netty" level="INFO"/>
 </configuration>
