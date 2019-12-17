@@ -19,14 +19,16 @@
             </layout>
         </encoder>
     </appender>
-    <appender name="ASYNCSTDOUT" class="ch.qos.logback.classic.AsyncAppender">
+    <appender name="ASYNC-STDOUT" class="ch.qos.logback.classic.AsyncAppender">
         <appender-ref ref="JSON-STDOUT"/>
+    </appender>
+    <appender name="ASYNC-STDERR" class="ch.qos.logback.classic.AsyncAppender">
         <appender-ref ref="JSON-STDERR"/>
     </appender>
     <root level="INFO">
-        <appender-ref ref="ASYNCSTDOUT"/>
+        <appender-ref ref="ASYNC-STDOUT"/>
+        <appender-ref ref="ASYNC-STDERR"/>
     </root>
-
     <!-- suppress over-flood debugging info in the tests:
          by default spring boot and netty output over 10 thousand lines for just 4 tests!
          The packages below are the most flooding ones, so use INFO level for them. -->
