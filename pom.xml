@@ -1,69 +1,46 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-        <modelVersion>4.0.0</modelVersion>
-        <groupId>com.commercetools.payment-to-order-processor</groupId>
-        <artifactId>payment-to-order-processor</artifactId>
-        <version>1.1.0</version>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.commercetools.payment-to-order-processor</groupId>
+    <artifactId>payment-to-order-processor</artifactId>
+    <version>1.1.0</version>
 
-        <parent>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-parent</artifactId>
-            <version>1.5.10.RELEASE</version>
-            <relativePath /> <!-- lookup parent from repository -->
-        </parent>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>1.5.10.RELEASE</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
 
-        <properties>
-            <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-            <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-            <java.version>1.8</java.version>
-            <spring-cloud-gcp-dependencies.version>1.2.0.RELEASE</spring-cloud-gcp-dependencies.version>
-            <logback-json-classic.version>0.1.5</logback-json-classic.version>
-            <commercetools-jvm-sdk.version>1.30.0</commercetools-jvm-sdk.version>
-        </properties>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <java.version>1.8</java.version>
+        <logStashLogbackEncoder.version>5.2</logStashLogbackEncoder.version>
+        <logback-json-classic.version>1.2.3</logback-json-classic.version>
+        <jul-to-slf4.version>1.7.29</jul-to-slf4.version>
+        <commercetools-jvm-sdk.version>1.30.0</commercetools-jvm-sdk.version>
+    </properties>
 
-         <packaging>jar</packaging>
+    <packaging>jar</packaging>
 
-        <build>
-            <finalName>${project.artifactId}</finalName>
-            <plugins>
-                <plugin>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-maven-plugin</artifactId>
-                </plugin>
-            </plugins>
-        </build>
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 
-        <!-- The Spring Cloud GCP BOM will manage spring-cloud-gcp version numbers for you. -->
-        <dependencyManagement>
-            <dependencies>
-                <dependency>
-                    <groupId>org.springframework.cloud</groupId>
-                    <artifactId>spring-cloud-gcp-dependencies</artifactId>
-                    <version>${spring-cloud-gcp-dependencies.version}</version>
-                    <type>pom</type>
-                    <scope>import</scope>
-                </dependency>
-            </dependencies>
-        </dependencyManagement>
 
-        <dependencies>
-            <!-- spring boot -->
+    <dependencies>
+        <!-- spring boot -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-batch</artifactId>
         </dependency>
-
-        <!-- Starter for Stackriver Logging -->
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-gcp-starter-logging</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback.contrib</groupId>
-            <artifactId>logback-json-classic</artifactId>
-            <version>${logback-json-classic.version}</version>
-        </dependency>
-
         <!-- commercetools jvm sdk -->
         <dependency>
             <groupId>com.commercetools.sdk.jvm.core</groupId>
@@ -80,6 +57,23 @@
             <artifactId>commons-codec</artifactId>
             <version>1.11</version>
         </dependency>
+        <!--logging-->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback-json-classic.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>${logStashLogbackEncoder.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jul-to-slf4j</artifactId>
+            <version>${jul-to-slf4.version}</version>
+        </dependency>
+
 
         <!-- Compile time validation -->
         <dependency>

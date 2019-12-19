@@ -1,31 +1,52 @@
-<configuration>
+<configuration debug="true">
+    <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+        <resetJUL>true</resetJUL>
+    </contextListener>
     <appender name="JSON-STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <target>System.out</target>
-        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-            <layout class="org.springframework.cloud.gcp.logging.StackdriverJsonLayout">
-                <projectId>commercetools-payment-to-order-processor</projectId>
-            </layout>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <message/>
+                <arguments/>
+                <logstashMarkers/>
+                <!-- Some fields are mapped to camel-case for consistency -->
+                <timestamp>
+                    <!-- Map default "@timestamp" to "timestamp" -->
+                    <fieldName>timestamp</fieldName>
+                </timestamp>
+                <loggerName>
+                    <!-- Map default "logger_name" to "loggerName" -->
+                    <fieldName>loggerName</fieldName>
+                </loggerName>
+                <logLevel>
+                    <!-- Map default "logLevel" to "severity" for GCP Stackdriver -->
+                    <fieldName>severity</fieldName>
+                </logLevel>
+                <stackHash>
+                    <!-- Map default "stack_hash" to "stackHash" -->
+                    <fieldName>stackHash</fieldName>
+                </stackHash>
+                <stackTrace>
+                    <!-- Map default "stack_trace" to "stackTrace" -->
+                    <fieldName>stackTrace</fieldName>
+                    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                        <maxDepthPerThrowable>30</maxDepthPerThrowable>
+                        <maxLength>2048</maxLength>
+                        <shortenedClassNameLength>20</shortenedClassNameLength>
+                        <rootCauseFirst>true</rootCauseFirst>
+                    </throwableConverter>
+                </stackTrace>
+            </providers>
         </encoder>
     </appender>
-    <appender name="JSON-STDERR" class="ch.qos.logback.core.ConsoleAppender">
-        <target>System.err</target>
-        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-            <layout class="org.springframework.cloud.gcp.logging.StackdriverJsonLayout">
-                <projectId>commercetools-payment-to-order-processor</projectId>
-            </layout>
-        </encoder>
-    </appender>
-    <appender name="ASYNC-STDOUT" class="ch.qos.logback.classic.AsyncAppender">
+
+    <appender name="ASYNCSTDOUT" class="ch.qos.logback.classic.AsyncAppender">
         <appender-ref ref="JSON-STDOUT"/>
     </appender>
-    <appender name="ASYNC-STDERR" class="ch.qos.logback.classic.AsyncAppender">
-        <appender-ref ref="JSON-STDERR"/>
-    </appender>
-    <root level="INFO">
-        <appender-ref ref="ASYNC-STDOUT"/>
-        <appender-ref ref="ASYNC-STDERR"/>
-    </root>
 
+    <root level="INFO">
+        <appender-ref ref="ASYNCSTDOUT"/>
+    </root>
     <logger name="org.springframework" level="WARN"/>
 
     <!-- these 2 classes produce unnecessary warning about Beans mapping and default datasource absence. -->
