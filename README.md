@@ -26,7 +26,9 @@ The service polls `PaymentTransactionStateChanged` messages from the commercetoo
 If the PaymentTransaction type matches the configured values and the total price of the cart equals the amount of the transaction and is not already ordered then the service has to trigger order creation.
 
 ## Creating the order
-This service does not creates orders itself because that would result in a duplicated implementation of order generation. In the shop and in this service. Therefore it just calls over HTTP GET configured URL (i.e.: shop front end) with encrypted cart ID as parameter "encryptedCartId". The encryption algorithm is `Blowfish` with `Base64` String encoding.
+This service does not create orders itself, because that would result in duplicated implementation of order 
+creation: In the shop code base and in this service. Therefore, it just calls, over `HTTP GET`, a configured URL 
+(i.e.: shop front end) with the encrypted cart ID as parameter "encryptedCartId". The encryption algorithm is `Blowfish` with `Base64` String encoding.
 
 ## Using this service
 Just start the docker container with required configuration (environment) variables set.
