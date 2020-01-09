@@ -28,7 +28,7 @@ If the PaymentTransaction type matches the configured values and the total price
 ## Creating the order
 This service does not create orders itself, because that would result in duplicated implementation of order 
 creation: In the shop code base and in this service. Therefore, it just calls, over `HTTP GET`, a configured URL 
-(i.e.: shop front end) with encrypted cart ID as parameter "encryptedCartId". The encryption algorithm is `Blowfish` with `Base64` String encoding.
+(i.e.: shop front end) with the encrypted cart ID as parameter "encryptedCartId". The encryption algorithm is `Blowfish` with `Base64` String encoding.
 
 ## Using this service
 Just start the docker container with required configuration (environment) variables set.
