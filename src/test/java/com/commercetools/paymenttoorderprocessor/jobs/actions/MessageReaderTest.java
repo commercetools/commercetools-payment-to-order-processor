@@ -83,7 +83,7 @@ public class MessageReaderTest {
     @Test
     public void read_whenOnePage_returnsResultFromThePage() {
         when(client.executeBlocking(any())).thenAnswer(a -> {
-            MessageQuery query = a.getArgumentAt(0, MessageQuery.class);
+            MessageQuery query = a.getArgument(0, MessageQuery.class);
             if (query.offset() == 0) {
                 return firstMessagesResult;
             } else {
@@ -167,7 +167,7 @@ public class MessageReaderTest {
 
     private void mock2PagesResult(final BlockingSphereClient client, final MessageReader messageReader) {
         when(client.executeBlocking(any(MessageQuery.class))).thenAnswer(a -> {
-            MessageQuery query = a.getArgumentAt(0, MessageQuery.class);
+            MessageQuery query = a.getArgument(0, MessageQuery.class);
             if (query.offset() == 0) {
                 return firstMessagesResult;
             } else if (query.offset() <= (messageReader.RESULTS_PER_PAGE - messageReader.PAGE_OVERLAP)) {
