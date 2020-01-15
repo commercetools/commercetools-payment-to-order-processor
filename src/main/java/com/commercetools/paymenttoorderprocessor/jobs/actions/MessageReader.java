@@ -2,6 +2,7 @@ package com.commercetools.paymenttoorderprocessor.jobs.actions;
 
 import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
+import com.heshammassoud.correlationiddecorator.Request;
 import io.sphere.sdk.client.BlockingSphereClient;
 import io.sphere.sdk.messages.Message;
 import io.sphere.sdk.messages.queries.MessageQuery;
@@ -18,6 +19,8 @@ import javax.annotation.Nullable;
 import java.time.ZonedDateTime;
 import java.util.ArrayDeque;
 import java.util.Queue;
+
+import static com.commercetools.paymenttoorderprocessor.utils.CorrelationIdUtil.getFromMDCOrGenerateNew;
 
 /**
  * Reads PaymentTransactionStateChangedMessages from the commercetools platform.
@@ -60,7 +63,6 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
     @Nullable
     public PaymentTransactionStateChangedMessage read() {
         LOG.debug("wasInitialQueried: {}", wasInitialQueried);
-
         while (isQueryNeeded()) {
             fetchUnprocessedMessagesFromPlatform();
         }
@@ -110,7 +112,10 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
     private PagedQueryResult<Message> queryPlatform() {
         LOG.debug("Query CTP for Messages");
         final MessageQuery messageQuery = buildQuery();
-        final PagedQueryResult<Message> result = client.executeBlocking(messageQuery);
+
+        final PagedQueryResult<Message> result = client.executeBlocking(
+            Request.of(messageQuery, getFromMDCOrGenerateNew())
+        );
         //Get the total workload from first Query
         if (!wasInitialQueried) {
             total = result.getTotal();

@@ -1,5 +1,7 @@
 package com.commercetools.paymenttoorderprocessor.timestamp;
 
+import com.commercetools.paymenttoorderprocessor.utils.CorrelationIdUtil;
+import com.heshammassoud.correlationiddecorator.Request;
 import io.sphere.sdk.client.BlockingSphereClient;
 import io.sphere.sdk.customobjects.CustomObject;
 import io.sphere.sdk.customobjects.CustomObjectDraft;
@@ -69,8 +71,10 @@ public class TimeStampManagerImpl implements TimeStampManager {
     public void persistLastProcessedMessageTimeStamp() {
         if (lastActualProcessedMessageTimeStamp != null) {
             final CustomObjectDraft<TimeStamp> draft = createCustomObjectDraft();
-            final CustomObjectUpsertCommand<TimeStamp> updateCommad = CustomObjectUpsertCommand.of(draft);
-            client.executeBlocking(updateCommad);
+            final CustomObjectUpsertCommand<TimeStamp> updateCommand = CustomObjectUpsertCommand.of(draft);
+            client.executeBlocking(
+                Request.of(updateCommand, CorrelationIdUtil.getFromMDCOrGenerateNew())
+            );
             LOG.info("Set new last processed timestamp: {}", lastActualProcessedMessageTimeStamp.toString());
         } else {
             LOG.info("No one message was processed - lastTimestamp is unchanged: [{}]",
@@ -84,10 +88,12 @@ public class TimeStampManagerImpl implements TimeStampManager {
     }
 
     private void queryTimeStamp() {
-        final CustomObjectQuery<TimeStamp> customObjectQuery = CustomObjectQuery.of(TimeStamp.class)
-                .byContainer(containerName)
-                .plusPredicates(co -> co.key().is(KEY));
-        final PagedQueryResult<CustomObject<TimeStamp>> result = client.executeBlocking(customObjectQuery);
+        final CustomObjectQuery<TimeStamp> customObjectQuery = CustomObjectQuery
+            .of(TimeStamp.class)
+            .byContainer(containerName)
+            .plusPredicates(co -> co.key().is(KEY));
+        final PagedQueryResult<CustomObject<TimeStamp>> result = client
+            .executeBlocking(Request.of(customObjectQuery, CorrelationIdUtil.getFromMDCOrGenerateNew()));
         final List<CustomObject<TimeStamp>> results = result.getResults();
         if (results.isEmpty()) {
             LOG.warn("No Timestamp for last processed message has been found. This should only happen on the first run.");
