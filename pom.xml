@@ -52,6 +52,12 @@
             <artifactId>commercetools-models</artifactId>
             <version>${commercetools-jvm-sdk.version}</version>
         </dependency>
+        <!-- Remove dependency after bumping JVM SDK to 1.49.0 -->
+        <dependency>
+            <groupId>com.heshammassoud</groupId>
+            <artifactId>commercetools-correlation-id-decorator</artifactId>
+            <version>0.1.0</version>
+        </dependency>
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
