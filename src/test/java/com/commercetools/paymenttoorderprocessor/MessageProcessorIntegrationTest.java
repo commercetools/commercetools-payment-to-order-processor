@@ -58,7 +58,7 @@ public class MessageProcessorIntegrationTest extends IntegrationTest {
     private TimeStampManager timeStampManager;
 
     @Test
-    public void messageProcessorSuccess() throws Exception {
+    public void messageProcessorSuccess()  {
         PaymentFixtures.withPayment(testClient, payment -> {
 
             //Preconditions: to create message in commercetools platform
