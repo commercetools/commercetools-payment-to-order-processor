@@ -1,7 +1,8 @@
 sudo: required
 language: java
+dist: trusty # see: https://travis-ci.community/t/error-installing-oraclejdk8-expected-feature-release-number-in-range-of-9-to-14-but-got-8/3766/4
 jdk:
-- oraclejdk8
+  - openjdk8
 services:
 - docker
 

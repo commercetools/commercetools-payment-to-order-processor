@@ -1,5 +1,5 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.commercetools.payment-to-order-processor</groupId>
     <artifactId>payment-to-order-processor</artifactId>
@@ -9,14 +9,17 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>1.5.10.RELEASE</version>
-        <relativePath /> <!-- lookup parent from repository -->
+        <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
-        <commercetools-jvm-sdk.version>1.30.0</commercetools-jvm-sdk.version>
+        <logStashLogbackEncoder.version>6.3</logStashLogbackEncoder.version>
+        <logback-json-classic.version>1.2.3</logback-json-classic.version>
+        <jul-to-slf4.version>1.7.30</jul-to-slf4.version>
+        <commercetools-jvm-sdk.version>1.48.0</commercetools-jvm-sdk.version>
     </properties>
 
     <packaging>jar</packaging>
@@ -31,13 +34,13 @@
         </plugins>
     </build>
 
+
     <dependencies>
         <!-- spring boot -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-batch</artifactId>
         </dependency>
-
         <!-- commercetools jvm sdk -->
         <dependency>
             <groupId>com.commercetools.sdk.jvm.core</groupId>
@@ -52,8 +55,30 @@
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
-            <version>1.11</version>
+            <version>1.14</version>
         </dependency>
+        <!--logging-->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback-json-classic.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>${logback-json-classic.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>${logStashLogbackEncoder.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jul-to-slf4j</artifactId>
+            <version>${jul-to-slf4.version}</version>
+        </dependency>
+
 
         <!-- Compile time validation -->
         <dependency>
