@@ -2,8 +2,8 @@ package com.commercetools.paymenttoorderprocessor.jobs.actions;
 
 import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
-import com.heshammassoud.correlationiddecorator.Request;
 import io.sphere.sdk.client.BlockingSphereClient;
+import io.sphere.sdk.client.correlationid.CorrelationIdRequestDecorator;
 import io.sphere.sdk.messages.Message;
 import io.sphere.sdk.messages.queries.MessageQuery;
 import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
@@ -114,7 +114,7 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
         final MessageQuery messageQuery = buildQuery();
 
         final PagedQueryResult<Message> result = client.executeBlocking(
-            Request.of(messageQuery, getFromMDCOrGenerateNew())
+            CorrelationIdRequestDecorator.of(messageQuery, getFromMDCOrGenerateNew())
         );
         //Get the total workload from first Query
         if (!wasInitialQueried) {

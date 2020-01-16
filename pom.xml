@@ -19,7 +19,7 @@
         <logStashLogbackEncoder.version>6.3</logStashLogbackEncoder.version>
         <logback-json-classic.version>1.2.3</logback-json-classic.version>
         <jul-to-slf4.version>1.7.30</jul-to-slf4.version>
-        <commercetools-jvm-sdk.version>1.48.0</commercetools-jvm-sdk.version>
+        <commercetools-jvm-sdk.version>1.49.0</commercetools-jvm-sdk.version>
     </properties>
 
     <packaging>jar</packaging>
@@ -52,11 +52,10 @@
             <artifactId>commercetools-models</artifactId>
             <version>${commercetools-jvm-sdk.version}</version>
         </dependency>
-        <!-- Remove dependency after bumping JVM SDK to 1.49.0 -->
         <dependency>
-            <groupId>com.heshammassoud</groupId>
-            <artifactId>commercetools-correlation-id-decorator</artifactId>
-            <version>0.1.0</version>
+            <groupId>com.commercetools.sdk.jvm.core</groupId>
+            <artifactId>commercetools-convenience</artifactId>
+            <version>${commercetools-jvm-sdk.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-codec</groupId>

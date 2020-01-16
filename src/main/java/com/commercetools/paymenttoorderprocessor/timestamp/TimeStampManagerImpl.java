@@ -1,8 +1,8 @@
 package com.commercetools.paymenttoorderprocessor.timestamp;
 
 import com.commercetools.paymenttoorderprocessor.utils.CorrelationIdUtil;
-import com.heshammassoud.correlationiddecorator.Request;
 import io.sphere.sdk.client.BlockingSphereClient;
+import io.sphere.sdk.client.correlationid.CorrelationIdRequestDecorator;
 import io.sphere.sdk.customobjects.CustomObject;
 import io.sphere.sdk.customobjects.CustomObjectDraft;
 import io.sphere.sdk.customobjects.commands.CustomObjectUpsertCommand;
@@ -73,7 +73,7 @@ public class TimeStampManagerImpl implements TimeStampManager {
             final CustomObjectDraft<TimeStamp> draft = createCustomObjectDraft();
             final CustomObjectUpsertCommand<TimeStamp> updateCommand = CustomObjectUpsertCommand.of(draft);
             client.executeBlocking(
-                Request.of(updateCommand, CorrelationIdUtil.getFromMDCOrGenerateNew())
+                CorrelationIdRequestDecorator.of(updateCommand, CorrelationIdUtil.getFromMDCOrGenerateNew())
             );
             LOG.info("Set new last processed timestamp: {}", lastActualProcessedMessageTimeStamp.toString());
         } else {
@@ -93,7 +93,7 @@ public class TimeStampManagerImpl implements TimeStampManager {
             .byContainer(containerName)
             .plusPredicates(co -> co.key().is(KEY));
         final PagedQueryResult<CustomObject<TimeStamp>> result = client
-            .executeBlocking(Request.of(customObjectQuery, CorrelationIdUtil.getFromMDCOrGenerateNew()));
+            .executeBlocking(CorrelationIdRequestDecorator.of(customObjectQuery, CorrelationIdUtil.getFromMDCOrGenerateNew()));
         final List<CustomObject<TimeStamp>> results = result.getResults();
         if (results.isEmpty()) {
             LOG.warn("No Timestamp for last processed message has been found. This should only happen on the first run.");

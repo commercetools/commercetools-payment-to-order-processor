@@ -1,7 +1,7 @@
 package com.commercetools.paymenttoorderprocessor.customobjects;
 
-import com.heshammassoud.correlationiddecorator.Request;
 import io.sphere.sdk.client.BlockingSphereClient;
+import io.sphere.sdk.client.correlationid.CorrelationIdRequestDecorator;
 import io.sphere.sdk.customobjects.CustomObject;
 import io.sphere.sdk.customobjects.CustomObjectDraft;
 import io.sphere.sdk.customobjects.commands.CustomObjectUpsertCommand;
@@ -36,7 +36,7 @@ public class MessageProcessedManagerImpl implements MessageProcessedManager {
                 .byContainer(customObjectContainerName)
                 .plusPredicates(co -> co.key().is(message.getId()));
         final PagedQueryResult<CustomObject<String>> result = client
-            .executeBlocking(Request.of(query, getFromMDCOrGenerateNew()));
+            .executeBlocking(CorrelationIdRequestDecorator.of(query, getFromMDCOrGenerateNew()));
         final List<CustomObject<String>> results = result.getResults();
         if (results.isEmpty()) {
             return true;
@@ -53,7 +53,7 @@ public class MessageProcessedManagerImpl implements MessageProcessedManager {
         final CustomObjectDraft<String> draft = CustomObjectDraft
             .ofUnversionedUpsert(customObjectContainerName, message.getId(), PROCESSED, String.class);
         client.executeBlocking(
-            Request.of(CustomObjectUpsertCommand.of(draft), getFromMDCOrGenerateNew())
+            CorrelationIdRequestDecorator.of(CustomObjectUpsertCommand.of(draft), getFromMDCOrGenerateNew())
         );
     }
 }

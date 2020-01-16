@@ -4,11 +4,11 @@ import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedM
 import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager.PaymentCreationConfigurationManager;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
 import com.commercetools.paymenttoorderprocessor.wrapper.CartAndMessage;
-import com.heshammassoud.correlationiddecorator.Request;
 import io.sphere.sdk.carts.Cart;
 import io.sphere.sdk.carts.CartState;
 import io.sphere.sdk.carts.queries.CartQuery;
 import io.sphere.sdk.client.BlockingSphereClient;
+import io.sphere.sdk.client.correlationid.CorrelationIdRequestDecorator;
 import io.sphere.sdk.payments.Payment;
 import io.sphere.sdk.payments.Transaction;
 import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
@@ -102,7 +102,7 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
 
         final List<Cart> results = client
             .executeBlocking(
-                Request.of(cartQuery, getFromMDCOrGenerateNew()))
+                CorrelationIdRequestDecorator.of(cartQuery, getFromMDCOrGenerateNew()))
             .getResults();
 
         if (results.isEmpty()) {
@@ -119,7 +119,7 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
         final String paymentId = message.getResource().getId();
         LOG.debug("Query CTP for Payment with ID {}", paymentId);
         return client.executeBlocking(
-            Request
+            CorrelationIdRequestDecorator
                 .of(PaymentByIdGet.of(paymentId), getFromMDCOrGenerateNew())
         );
     }
