@@ -28,6 +28,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static com.commercetools.paymenttoorderprocessor.utils.CorrelationIdUtil.getFromMDCOrGenerateNew;
 import static org.apache.commons.lang3.StringUtils.isNoneEmpty;
 
 /***
@@ -102,6 +103,7 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
         queryStringEncoder.addParam("encryptedCartId", encryptedCartId);
 
         HttpHeaders httpHeaders = HttpHeaders.empty();
+        httpHeaders.plus(HttpHeaders.X_CORRELATION_ID, getFromMDCOrGenerateNew());
 
         if (isNoneEmpty(authentication)) {
             String encoded = Base64.encodeBase64String(authentication.getBytes());

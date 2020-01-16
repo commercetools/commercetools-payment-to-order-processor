@@ -1,6 +1,7 @@
 package com.commercetools.paymenttoorderprocessor.customobjects;
 
 import io.sphere.sdk.client.BlockingSphereClient;
+import io.sphere.sdk.client.correlationid.CorrelationIdRequestDecorator;
 import io.sphere.sdk.customobjects.CustomObject;
 import io.sphere.sdk.customobjects.CustomObjectDraft;
 import io.sphere.sdk.customobjects.commands.CustomObjectUpsertCommand;
@@ -11,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.util.List;
+
+import static com.commercetools.paymenttoorderprocessor.utils.CorrelationIdUtil.getFromMDCOrGenerateNew;
 
 /**
  * Reads custom objects in commercetools platform and checks if Message was already processed.
@@ -32,7 +35,8 @@ public class MessageProcessedManagerImpl implements MessageProcessedManager {
         final CustomObjectQuery<String> query = CustomObjectQuery.of(String.class)
                 .byContainer(customObjectContainerName)
                 .plusPredicates(co -> co.key().is(message.getId()));
-        final PagedQueryResult<CustomObject<String>> result = client.executeBlocking(query);
+        final PagedQueryResult<CustomObject<String>> result = client
+            .executeBlocking(CorrelationIdRequestDecorator.of(query, getFromMDCOrGenerateNew()));
         final List<CustomObject<String>> results = result.getResults();
         if (results.isEmpty()) {
             return true;
@@ -46,7 +50,10 @@ public class MessageProcessedManagerImpl implements MessageProcessedManager {
 
     @Override
     public void setMessageIsProcessed(Message message) {
-        final CustomObjectDraft<String> draft = CustomObjectDraft.ofUnversionedUpsert(customObjectContainerName, message.getId(), PROCESSED, String.class);
-        client.executeBlocking(CustomObjectUpsertCommand.of(draft));
+        final CustomObjectDraft<String> draft = CustomObjectDraft
+            .ofUnversionedUpsert(customObjectContainerName, message.getId(), PROCESSED, String.class);
+        client.executeBlocking(
+            CorrelationIdRequestDecorator.of(CustomObjectUpsertCommand.of(draft), getFromMDCOrGenerateNew())
+        );
     }
 }

@@ -8,6 +8,7 @@ import io.sphere.sdk.carts.Cart;
 import io.sphere.sdk.carts.CartState;
 import io.sphere.sdk.carts.queries.CartQuery;
 import io.sphere.sdk.client.BlockingSphereClient;
+import io.sphere.sdk.client.correlationid.CorrelationIdRequestDecorator;
 import io.sphere.sdk.payments.Payment;
 import io.sphere.sdk.payments.Transaction;
 import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
@@ -22,6 +23,8 @@ import javax.money.MonetaryAmount;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+
+import static com.commercetools.paymenttoorderprocessor.utils.CorrelationIdUtil.getFromMDCOrGenerateNew;
 
 /***
  * Checks if PaymentTransactionStateChangedMessage and corresponding Cart is viable for creation of an Order
@@ -96,7 +99,12 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
     private Optional<Cart> getCorrespondingCart(final Payment payment) {
         final CartQuery cartQuery = CartQuery.of()
                 .withPredicates(m -> m.paymentInfo().payments().isIn(Collections.singletonList(payment)));
-        List<Cart> results = client.executeBlocking(cartQuery).getResults();
+
+        final List<Cart> results = client
+            .executeBlocking(
+                CorrelationIdRequestDecorator.of(cartQuery, getFromMDCOrGenerateNew()))
+            .getResults();
+
         if (results.isEmpty()) {
             return Optional.empty();
         } else {
@@ -110,7 +118,9 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
     private Payment getCorrespondingPayment(final PaymentTransactionStateChangedMessage message) {
         final String paymentId = message.getResource().getId();
         LOG.debug("Query CTP for Payment with ID {}", paymentId);
-        final PaymentByIdGet paymentByIdGet = PaymentByIdGet.of(paymentId);
-        return client.executeBlocking(paymentByIdGet);
+        return client.executeBlocking(
+            CorrelationIdRequestDecorator
+                .of(PaymentByIdGet.of(paymentId), getFromMDCOrGenerateNew())
+        );
     }
 }
