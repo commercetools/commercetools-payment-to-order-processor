@@ -1,6 +1,6 @@
 # commercetools-payment-to-order-processor Service
 
-[![Build Status](https://travis-ci.org/commercetools/commercetools-payment-to-order-processor.svg?branch=dev-docker-build)](https://travis-ci.org/commercetools/commercetools-payment-to-order-processor)
+[![Build Status](https://travis-ci.com/commercetools/commercetools-payment-to-order-processor.svg?branch=master)
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
