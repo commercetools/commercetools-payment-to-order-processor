@@ -1,6 +1,7 @@
 # commercetools-payment-to-order-processor Service
 
-[![Build Status](https://travis-ci.org/commercetools/commercetools-payment-to-order-processor.svg?branch=dev-docker-build)](https://travis-ci.org/commercetools/commercetools-payment-to-order-processor)
+![Build Status](https://travis-ci.com/commercetools/commercetools-payment-to-order-processor.svg?branch=master)
+[![Docker Pulls](https://img.shields.io/docker/pulls/commercetools/payment-to-order-processor)](https://hub.docker.com/r/commercetools/payment-to-order-processor)
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -147,7 +148,7 @@ Following Docker images (tags) are created after successful Travis CI build:
     - docker tag equal to git tag name, i.e.: `v1.0.0`
     - docker tag `production`
     
-###Docker image tags table:
+### Docker image tags table:
     
 | Commit                          | commit hash<br/>`travis-[build #]` | `latest` | `wip-[branch-name]` | git tag | `production` | 
 |---------------------------------|:----------------------------------:|:--------:|:-------------------:|:-------:|:------------:|
@@ -162,7 +163,7 @@ The only things you should provide are:
   - keep _Dockerfile_ in the root of the project. 
   Setup _Dockerfile_ to use target jar from location mentioned in the step above.
   - setup `$DOCKER_USERNAME` and `$DOCKER_PASSWORD` variables in the 
-  [travis build settings](https://travis-ci.org/commercetools/commercetools-payment-to-order-processor/settings) 
+  [travis build settings](https://travis-ci.com/commercetools/commercetools-payment-to-order-processor/settings) 
   to deploy the new images to the hub.
   - _travis-build.sh_ will be started from _.travis.yml_ after successful project build and test.
     - the script requires `${SHORT_COMMIT}` environment variable, 

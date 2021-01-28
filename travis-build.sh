@@ -2,7 +2,7 @@
 
 set -e
 
-export REPO="sphereio/payment-to-order-processor"
+export REPO="commercetools/payment-to-order-processor"
 export PRODUCTION_TAG="production"
 
 export DOCKER_TAG=`if [[ "$TRAVIS_BRANCH" = "master" && "$TRAVIS_PULL_REQUEST" = "false" ]] || [[ "$TRAVIS_TAG" ]]; then echo "latest"; else echo "wip-${TRAVIS_BRANCH//\//-}" ; fi`
