@@ -19,7 +19,7 @@
         <logStashLogbackEncoder.version>6.6</logStashLogbackEncoder.version>
         <logback-json-classic.version>1.2.3</logback-json-classic.version>
         <jul-to-slf4.version>1.7.30</jul-to-slf4.version>
-        <commercetools-jvm-sdk.version>1.59.0</commercetools-jvm-sdk.version>
+        <commercetools-jvm-sdk.version>1.60.0</commercetools-jvm-sdk.version>
     </properties>
 
     <packaging>jar</packaging>
