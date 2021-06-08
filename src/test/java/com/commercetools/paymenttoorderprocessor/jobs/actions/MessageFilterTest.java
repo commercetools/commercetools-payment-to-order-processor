@@ -1,6 +1,7 @@
 package com.commercetools.paymenttoorderprocessor.jobs.actions;
 
 import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
+import com.commercetools.paymenttoorderprocessor.dto.PaymentTransactionCreatedOrUpdatedMessage;
 import com.commercetools.paymenttoorderprocessor.testconfiguration.ExtendedTestConfiguration;
 import com.commercetools.paymenttoorderprocessor.testconfiguration.HttpClientMockConfiguration;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
@@ -8,7 +9,6 @@ import com.commercetools.paymenttoorderprocessor.wrapper.CartAndMessage;
 import io.sphere.sdk.client.BlockingSphereClient;
 import io.sphere.sdk.json.SphereJsonUtils;
 import io.sphere.sdk.payments.Payment;
-import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -55,11 +55,11 @@ public class MessageFilterTest {
     @Autowired
     private MessageProcessedManager messageProcessedManager;
 
-    private PaymentTransactionStateChangedMessage testMessage;
+    private PaymentTransactionCreatedOrUpdatedMessage testMessage;
 
     @Before
     public void setUp() {
-        testMessage = SphereJsonUtils.readObjectFromResource("mocks/messageFilter/PaymentTransactionStateChangedMessage.json", PaymentTransactionStateChangedMessage.class);
+        testMessage = SphereJsonUtils.readObjectFromResource("mocks/messageFilter/PaymentTransactionStateChangedMessage.json", PaymentTransactionCreatedOrUpdatedMessage.class);
     }
 
     @Test

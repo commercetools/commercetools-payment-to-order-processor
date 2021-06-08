@@ -1,11 +1,11 @@
 package com.commercetools.paymenttoorderprocessor.jobs.actions;
 
 import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
+import com.commercetools.paymenttoorderprocessor.dto.PaymentTransactionCreatedOrUpdatedMessage;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
 import io.sphere.sdk.client.BlockingSphereClient;
 import io.sphere.sdk.messages.Message;
 import io.sphere.sdk.messages.queries.MessageQuery;
-import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 import io.sphere.sdk.queries.PagedQueryResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +26,7 @@ import java.util.Queue;
  * @author mht@dotsource.de
  */
 
-public class MessageReader implements ItemReader<PaymentTransactionStateChangedMessage> {
+public class MessageReader implements ItemReader<PaymentTransactionCreatedOrUpdatedMessage> {
 
     private static final Logger LOG = LoggerFactory.getLogger(MessageReader.class);
 
@@ -39,13 +39,14 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
     @Autowired
     private MessageProcessedManager messageProcessedManager;
 
-    private static final String MESSAGETYPE = "PaymentTransactionStateChanged";
+    private static final String PAYMENT_TRANSACTION_STATE_CHANGED = "PaymentTransactionStateChanged";
+    private static final String PAYMENT_TRANSACTION_ADDED = "PaymentTransactionAdded";
 
     @Value("${ctp.messagereader.minutesoverlapping}")
     private Integer minutesOverlapping;
 
     @Nonnull
-    private Queue<PaymentTransactionStateChangedMessage> unprocessedMessagesQueue = new ArrayDeque<>();
+    private Queue<PaymentTransactionCreatedOrUpdatedMessage> unprocessedMessagesQueue = new ArrayDeque<>();
 
     private boolean wasInitialQueried = false;
     private long total;
@@ -58,7 +59,7 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
      */
     @Override
     @Nullable
-    public PaymentTransactionStateChangedMessage read() {
+    public PaymentTransactionCreatedOrUpdatedMessage read() {
         LOG.debug("wasInitialQueried: {}", wasInitialQueried);
 
         while (isQueryNeeded()) {
@@ -72,7 +73,7 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
      * @return oldest unprocessed message from the queue if exists, or <b>null</b>
      */
     @Nullable
-    private PaymentTransactionStateChangedMessage getUnprocessedMessageFromQueue() {
+    private PaymentTransactionCreatedOrUpdatedMessage getUnprocessedMessageFromQueue() {
         return unprocessedMessagesQueue.poll();
     }
 
@@ -94,7 +95,7 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
     private void fetchUnprocessedMessagesFromPlatform() {
         final PagedQueryResult<Message> result = queryPlatform();
         result.getResults().stream()
-                .map(message -> message.as(PaymentTransactionStateChangedMessage.class))
+                .map(message -> message.as(PaymentTransactionCreatedOrUpdatedMessage.class))
                 .forEach(message -> {
                     if (messageProcessedManager.isMessageUnprocessed(message)) {
                         unprocessedMessagesQueue.add(message);
@@ -127,7 +128,7 @@ public class MessageReader implements ItemReader<PaymentTransactionStateChangedM
     private MessageQuery buildQuery() {
 
         MessageQuery messageQuery = MessageQuery.of()
-                .withPredicates(m -> m.type().is(MESSAGETYPE))
+                .plusPredicates(m -> m.type().is(PAYMENT_TRANSACTION_ADDED).or(m.type().is(PAYMENT_TRANSACTION_STATE_CHANGED)))
                 .withSort(m -> m.lastModifiedAt().sort().asc())
                 .withOffset(offset)
                 .withLimit(RESULTS_PER_PAGE);

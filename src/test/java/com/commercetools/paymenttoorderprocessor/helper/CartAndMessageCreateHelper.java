@@ -1,5 +1,6 @@
 package com.commercetools.paymenttoorderprocessor.helper;
 
+import com.commercetools.paymenttoorderprocessor.dto.PaymentTransactionCreatedOrUpdatedMessage;
 import com.commercetools.paymenttoorderprocessor.fixtures.CartFixtures;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageFilter;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageReader;
@@ -17,7 +18,6 @@ import io.sphere.sdk.payments.*;
 import io.sphere.sdk.payments.commands.PaymentUpdateCommand;
 import io.sphere.sdk.payments.commands.updateactions.AddTransaction;
 import io.sphere.sdk.payments.commands.updateactions.ChangeTransactionState;
-import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 import io.sphere.sdk.queries.PagedQueryResult;
 import io.sphere.sdk.taxcategories.TaxCategory;
 import io.sphere.sdk.taxcategories.queries.TaxCategoryQuery;
@@ -78,7 +78,7 @@ public class CartAndMessageCreateHelper {
         final Payment paymentWithTransactionStateChange = testClient.executeBlocking(PaymentUpdateCommand.of(paymentWithTransaction, changeTransactionState));
 
         //final array so lambda can use it
-        final PaymentTransactionStateChangedMessage[] message = new PaymentTransactionStateChangedMessage[1];
+        final PaymentTransactionCreatedOrUpdatedMessage[] message = new PaymentTransactionCreatedOrUpdatedMessage[1];
 
         //Give Platform time to create messages
         try {

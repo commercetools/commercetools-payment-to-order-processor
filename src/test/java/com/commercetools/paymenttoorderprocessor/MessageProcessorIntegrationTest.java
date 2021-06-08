@@ -1,5 +1,6 @@
 package com.commercetools.paymenttoorderprocessor;
 
+import com.commercetools.paymenttoorderprocessor.dto.PaymentTransactionCreatedOrUpdatedMessage;
 import com.commercetools.paymenttoorderprocessor.fixtures.CartFixtures;
 import com.commercetools.paymenttoorderprocessor.fixtures.PaymentFixtures;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageFilter;
@@ -21,7 +22,8 @@ import io.sphere.sdk.payments.*;
 import io.sphere.sdk.payments.commands.PaymentUpdateCommand;
 import io.sphere.sdk.payments.commands.updateactions.AddTransaction;
 import io.sphere.sdk.payments.commands.updateactions.ChangeTransactionState;
-import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
+import io.sphere.sdk.projects.Project;
+import io.sphere.sdk.projects.queries.ProjectGet;
 import io.sphere.sdk.queries.PagedQueryResult;
 import io.sphere.sdk.taxcategories.TaxCategory;
 import io.sphere.sdk.taxcategories.queries.TaxCategoryQuery;
@@ -32,6 +34,7 @@ import org.springframework.boot.test.context.ConfigFileApplicationContextInitial
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 
@@ -62,9 +65,8 @@ public class MessageProcessorIntegrationTest extends IntegrationTest {
         PaymentFixtures.withPayment(testClient, payment -> {
 
             //Preconditions: to create message in commercetools platform
-            final PagedQueryResult<TaxCategory> result = testClient.executeBlocking(TaxCategoryQuery.of().byName("standard"));
-            final List<TaxCategory> results = result.getResults();
-            assertThat(results).isNotEmpty();
+            final List<TaxCategory> results = checkPreconditions();
+
             final CustomLineItemDraft customLineItemDraft = CustomLineItemDraft.of(LocalizedString.ofEnglish("messageProcesserIntegrationTestCustomLineItem"), "Slug", EUR_20, results.get(0), 1L);
             final Address address = Address.of(CountryCode.DE);
             final Cart cart = CartFixtures.createCart(testClient, CartDraft.of(EUR)
@@ -82,33 +84,48 @@ public class MessageProcessorIntegrationTest extends IntegrationTest {
             final ChangeTransactionState changeTransactionState = ChangeTransactionState.of(TransactionState.SUCCESS, transaction.getId());
             final Payment paymentWithTransactionStateChange = testClient.executeBlocking(PaymentUpdateCommand.of(paymentWithTransaction, changeTransactionState));
 
-            //final array so lambda can use it
-            final PaymentTransactionStateChangedMessage[] message = new PaymentTransactionStateChangedMessage[1];
 
             //Give Platform time to create messages
             try {
                 Thread.sleep(10000L);
             } catch (InterruptedException e) {
             }
+
+            //final array so lambda can use it
+            final ZonedDateTime[] lastModifiedAt = new ZonedDateTime[1];
+
             //get the correct message to read
             assertEventually(() -> {
-                message[0] = messageReader.read();
-                assertThat(message[0]).isNotNull();
-                assertThat(message[0].getResource().getId()).isEqualTo(payment.getId());
+                PaymentTransactionCreatedOrUpdatedMessage message = messageReader.read();
+                assertThat(message).isNotNull();
+                assertThat(message.getResource().getId()).isEqualTo(payment.getId());
+                //test if message is processed correctly (i.e. -> get the corresponding CardAndMessage-Wrapper)
+                final CartAndMessage cartAndMessage = messageProcessor.process(message);
+                assertThat(cartAndMessage).isNotNull();
+                final Cart cartToTest = cartAndMessage.getCart();
+                assertThat(cartToTest).isNotNull();
+                assertThat(cartToTest.getId()).isEqualTo(cartWithPayment.getId());
+
+                lastModifiedAt[0] = message.getLastModifiedAt();
             });
 
-            //test if message is processed correctly (i.e. -> get the corresponding CardAndMessage-Wrapper)
-            final CartAndMessage cartAndMessage = messageProcessor.process(message[0]);
-            assertThat(cartAndMessage).isNotNull();
-            final Cart cartToTest = cartAndMessage.getCart();
-            assertThat(cartToTest).isNotNull();
-            assertThat(cartToTest.getId()).isEqualTo(cartWithPayment.getId());
-
-            // when MessageFilter.process() returns CartAndMessage instance - timestamp is not updated
+            // timestamp is updated as we have processed 2 messages for the payment transaction:
+            // one for PaymentTransactionAdded - MessageFilter.process() returns null and timestamp is updated
+            // second for PaymentTransactionStatusUpdated - MessageFilter.process() returns CartAndMessage instance
             timeStampManager.persistLastProcessedMessageTimeStamp();
-            assertThat(timeStampManager.getLastProcessedMessageTimeStamp()).isNull();
+            assertThat(timeStampManager.getLastProcessedMessageTimeStamp()).isBeforeOrEqualTo(lastModifiedAt[0]);
 
             return paymentWithTransactionStateChange;
         });
+    }
+
+    private List<TaxCategory> checkPreconditions() {
+        final Project project = testClient.executeBlocking(ProjectGet.of());
+        final Boolean isMessageEnabled = project.getMessages().isEnabled();
+        assertThat(isMessageEnabled).as("Project should have messages enabled.").isTrue();
+        final PagedQueryResult<TaxCategory> result = testClient.executeBlocking(TaxCategoryQuery.of().byName("standard"));
+        final List<TaxCategory> results = result.getResults();
+        assertThat(results).isNotEmpty();
+        return results;
     }
 }

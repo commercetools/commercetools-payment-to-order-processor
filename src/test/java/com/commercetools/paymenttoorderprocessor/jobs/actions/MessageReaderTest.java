@@ -1,6 +1,7 @@
 package com.commercetools.paymenttoorderprocessor.jobs.actions;
 
 import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
+import com.commercetools.paymenttoorderprocessor.dto.PaymentTransactionCreatedOrUpdatedMessage;
 import com.commercetools.paymenttoorderprocessor.testconfiguration.ExtendedTestConfiguration;
 import com.commercetools.paymenttoorderprocessor.testconfiguration.HttpClientMockConfiguration;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
@@ -8,7 +9,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import io.sphere.sdk.client.BlockingSphereClient;
 import io.sphere.sdk.json.SphereJsonUtils;
 import io.sphere.sdk.messages.queries.MessageQuery;
-import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 import io.sphere.sdk.queries.PagedQueryResult;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,17 +47,17 @@ public class MessageReaderTest {
 
     private static final String MOCKS = "mocks/messageReader/";
 
-    private static final TypeReference<PagedQueryResult<PaymentTransactionStateChangedMessage>> PagedQueryWithMessages =
-            new TypeReference<PagedQueryResult<PaymentTransactionStateChangedMessage>>() {
+    private static final TypeReference<PagedQueryResult<PaymentTransactionCreatedOrUpdatedMessage>> PagedQueryWithMessages =
+            new TypeReference<PagedQueryResult<PaymentTransactionCreatedOrUpdatedMessage>>() {
             };
 
-    private static final PagedQueryResult<PaymentTransactionStateChangedMessage> emptyMessagesResult =
+    private static final PagedQueryResult<PaymentTransactionCreatedOrUpdatedMessage> emptyMessagesResult =
             SphereJsonUtils.readObjectFromResource(MOCKS + "messagesResult_empty.json", PagedQueryWithMessages);
 
-    private static final PagedQueryResult<PaymentTransactionStateChangedMessage> firstMessagesResult =
+    private static final PagedQueryResult<PaymentTransactionCreatedOrUpdatedMessage> firstMessagesResult =
             SphereJsonUtils.readObjectFromResource(MOCKS + "messagesResult_1.json", PagedQueryWithMessages);
 
-    private static final PagedQueryResult<PaymentTransactionStateChangedMessage> secondMessagesResult =
+    private static final PagedQueryResult<PaymentTransactionCreatedOrUpdatedMessage> secondMessagesResult =
             SphereJsonUtils.readObjectFromResource(MOCKS + "messagesResult_2.json", PagedQueryWithMessages);
 
     @Autowired
@@ -90,11 +90,11 @@ public class MessageReaderTest {
                 return emptyMessagesResult;
             }
         });
-        PaymentTransactionStateChangedMessage firstUnprocessedMessage = messageReader.read();
+        PaymentTransactionCreatedOrUpdatedMessage firstUnprocessedMessage = messageReader.read();
         assertThat(firstUnprocessedMessage).isNotNull();
         assertThat(firstUnprocessedMessage.getId()).isEqualTo("11111111-1111-1111-1111-111111111111");
 
-        PaymentTransactionStateChangedMessage secondUnprocessedMessage = messageReader.read();
+        PaymentTransactionCreatedOrUpdatedMessage secondUnprocessedMessage = messageReader.read();
         assertThat(secondUnprocessedMessage).isNotNull();
         assertThat(secondUnprocessedMessage.getId()).isEqualTo("44444444-4444-4444-4444-444444444444");
 
@@ -112,16 +112,16 @@ public class MessageReaderTest {
     @Test
     public void read_whenFirstPageIsEmpty_returnsResultFromSecondPage_AndPersistsTimestamp() {
         // mark results from the first page as processed
-        List<PaymentTransactionStateChangedMessage> firstResults = firstMessagesResult.getResults();
+        List<PaymentTransactionCreatedOrUpdatedMessage> firstResults = firstMessagesResult.getResults();
         firstResults.forEach(messageProcessedManager::setMessageIsProcessed);
 
         mock2PagesResult(client, messageReader);
 
-        PaymentTransactionStateChangedMessage firstMessage = messageReader.read();
+        PaymentTransactionCreatedOrUpdatedMessage firstMessage = messageReader.read();
         assertThat(firstMessage).isNotNull();
         assertThat(firstMessage.getId()).isEqualTo("111");
 
-        PaymentTransactionStateChangedMessage secondMessage = messageReader.read();
+        PaymentTransactionCreatedOrUpdatedMessage secondMessage = messageReader.read();
         assertThat(secondMessage).isNotNull();
         assertThat(secondMessage.getId()).isEqualTo("444");
 
@@ -131,7 +131,7 @@ public class MessageReaderTest {
         verify(client, times(3)).executeBlocking(any());
 
         // verify last timestamp is equal to last processed message
-        PaymentTransactionStateChangedMessage lastResultOnFirstPage = firstResults.get(firstResults.size() - 1);
+        PaymentTransactionCreatedOrUpdatedMessage lastResultOnFirstPage = firstResults.get(firstResults.size() - 1);
         timeStampManager.persistLastProcessedMessageTimeStamp();
         assertThat(timeStampManager.getLastProcessedMessageTimeStamp()).isEqualTo(lastResultOnFirstPage.getLastModifiedAt());
     }
@@ -139,19 +139,19 @@ public class MessageReaderTest {
     @Test
     public void read_someResultsAreProcessedOnFirstAndSecondPage_returnsResultFromFirstAndSecondPage_AndPersistsTimestamp() {
         // mark one result from first and one from second page as processed
-        List<PaymentTransactionStateChangedMessage> firstResults = firstMessagesResult.getResults();
-        List<PaymentTransactionStateChangedMessage> secondResults = secondMessagesResult.getResults();
+        List<PaymentTransactionCreatedOrUpdatedMessage> firstResults = firstMessagesResult.getResults();
+        List<PaymentTransactionCreatedOrUpdatedMessage> secondResults = secondMessagesResult.getResults();
         messageProcessedManager.setMessageIsProcessed(firstResults.get(0));
-        PaymentTransactionStateChangedMessage lastMessage = secondResults.get(1);
+        PaymentTransactionCreatedOrUpdatedMessage lastMessage = secondResults.get(1);
         messageProcessedManager.setMessageIsProcessed(lastMessage);
 
         mock2PagesResult(client, messageReader);
 
-        PaymentTransactionStateChangedMessage firstMessage = messageReader.read();
+        PaymentTransactionCreatedOrUpdatedMessage firstMessage = messageReader.read();
         assertThat(firstMessage).isNotNull();
         assertThat(firstMessage.getId()).isEqualTo("44444444-4444-4444-4444-444444444444");
 
-        PaymentTransactionStateChangedMessage secondMessage = messageReader.read();
+        PaymentTransactionCreatedOrUpdatedMessage secondMessage = messageReader.read();
         assertThat(secondMessage).isNotNull();
         assertThat(secondMessage.getId()).isEqualTo("111");
 
