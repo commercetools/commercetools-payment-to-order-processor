@@ -56,92 +56,101 @@ public class OrderCreatorIntegrationTest {
 
     @Test
     public void writeWith201CreatedResult() throws Exception {
-        CartAndMessage cartAndMessage1 = cartAndMessageCreateHelper.createCartAndMessage(
-                PaymentFixtures.withPayment(testClient, builder -> builder.amountPlanned(EUR_20), a -> a));
+        PaymentFixtures.withPayment(testClient, builder -> builder.amountPlanned(EUR_20), payment -> {
+            CartAndMessage cartAndMessage1 = cartAndMessageCreateHelper.createCartAndMessage(payment);
 
-        httpClientMock.spyStatusCode(HttpStatusCode.CREATED_201);
-        assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage1.getMessage())).isTrue();
-        orderCreator.write(Collections.singletonList(cartAndMessage1));
-        assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage1.getMessage())).isFalse();
+            httpClientMock.spyStatusCode(HttpStatusCode.CREATED_201);
+            assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage1.getMessage())).isTrue();
+            orderCreator.write(Collections.singletonList(cartAndMessage1));
+            assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage1.getMessage())).isFalse();
 
-        // timestamp should be updated, because all operations were successful
-        timeStampManager.setActualProcessedMessageTimeStamp(cartAndMessage1.getMessage().getLastModifiedAt());
-        persistAndAssertTimestampEquals(cartAndMessage1.getMessage().getLastModifiedAt());
+            // timestamp should be updated, because all operations were successful
+            timeStampManager.setActualProcessedMessageTimeStamp(cartAndMessage1.getMessage().getLastModifiedAt());
+            persistAndAssertTimestampEquals(cartAndMessage1.getMessage().getLastModifiedAt());
 
-        ZonedDateTime now = ZonedDateTime.now();
-        timeStampManager.setActualProcessedMessageTimeStamp(now);
-        persistAndAssertTimestampEquals(now);
+            ZonedDateTime now = ZonedDateTime.now();
+            timeStampManager.setActualProcessedMessageTimeStamp(now);
+            persistAndAssertTimestampEquals(now);
+
+            return payment;
+        });
     }
 
     @Test
     public void writeWith200OkResult() throws Exception {
-        CartAndMessage cartAndMessage2 = cartAndMessageCreateHelper.createCartAndMessage(
-                PaymentFixtures.withPayment(testClient, builder -> builder.amountPlanned(USD_30), a -> a));
+        PaymentFixtures.withPayment(testClient, builder -> builder.amountPlanned(USD_30), payment -> {
+            CartAndMessage cartAndMessage2 = cartAndMessageCreateHelper.createCartAndMessage(payment);
 
-        httpClientMock.spyStatusCode(HttpStatusCode.OK_200);
-        assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage2.getMessage())).isTrue();
-        orderCreator.write(Collections.singletonList(cartAndMessage2));
-        assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage2.getMessage())).isFalse();
+            httpClientMock.spyStatusCode(HttpStatusCode.OK_200);
+            assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage2.getMessage())).isTrue();
+            orderCreator.write(Collections.singletonList(cartAndMessage2));
+            assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage2.getMessage())).isFalse();
 
-        // timestamp should be updated, because result is 200
-        timeStampManager.setActualProcessedMessageTimeStamp(cartAndMessage2.getMessage().getLastModifiedAt());
-        persistAndAssertTimestampEquals(cartAndMessage2.getMessage().getLastModifiedAt());
+            // timestamp should be updated, because result is 200
+            timeStampManager.setActualProcessedMessageTimeStamp(cartAndMessage2.getMessage().getLastModifiedAt());
+            persistAndAssertTimestampEquals(cartAndMessage2.getMessage().getLastModifiedAt());
 
-        ZonedDateTime now = ZonedDateTime.now();
-        timeStampManager.setActualProcessedMessageTimeStamp(now);
-        persistAndAssertTimestampEquals(now);
+            ZonedDateTime now = ZonedDateTime.now();
+            timeStampManager.setActualProcessedMessageTimeStamp(now);
+            persistAndAssertTimestampEquals(now);
+
+            return payment;
+        });
     }
 
     @Test
     public void writeWith400BadResult() throws Exception {
-        CartAndMessage cartAndMessage3 = cartAndMessageCreateHelper.createCartAndMessage(
-                PaymentFixtures.withPayment(testClient, builder -> builder.amountPlanned(UAH_42), a -> a));
+        PaymentFixtures.withPayment(testClient, builder -> builder.amountPlanned(UAH_42), payment -> {
+            CartAndMessage cartAndMessage3 = cartAndMessageCreateHelper.createCartAndMessage(payment);
 
-        timeStampManager.setActualProcessedMessageTimeStamp(cartAndMessage3.getMessage().getLastModifiedAt());
+            timeStampManager.setActualProcessedMessageTimeStamp(cartAndMessage3.getMessage().getLastModifiedAt());
 
-        httpClientMock.spyResponse(HttpStatusCode.BAD_REQUEST_400, "Test 400 bad response");
-        assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage3.getMessage())).isTrue();
-        orderCreator.write(Collections.singletonList(cartAndMessage3));
-        assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage3.getMessage()))
-                .withFailMessage("Message should not be marked as processed")
-                .isTrue();
+            httpClientMock.spyResponse(HttpStatusCode.BAD_REQUEST_400, "Test 400 bad response");
+            assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage3.getMessage())).isTrue();
+            orderCreator.write(Collections.singletonList(cartAndMessage3));
+            assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage3.getMessage()))
+                    .withFailMessage("Message should not be marked as processed")
+                    .isTrue();
 
-        timeStampManager.setActualProcessedMessageTimeStamp(ZonedDateTime.now());
-        persistAndAssertTimestampEquals(cartAndMessage3.getMessage().getLastModifiedAt());
+            timeStampManager.setActualProcessedMessageTimeStamp(ZonedDateTime.now());
+            persistAndAssertTimestampEquals(cartAndMessage3.getMessage().getLastModifiedAt());
 
-        httpClientMock.spyResponse(HttpStatusCode.FORBIDDEN_403, "Test 403 bad response");
-        assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage3.getMessage())).isTrue();
-        orderCreator.write(Collections.singletonList(cartAndMessage3));
-        assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage3.getMessage()))
-                .withFailMessage("Message should not be marked as processed")
-                .isTrue();
+            httpClientMock.spyResponse(HttpStatusCode.FORBIDDEN_403, "Test 403 bad response");
+            assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage3.getMessage())).isTrue();
+            orderCreator.write(Collections.singletonList(cartAndMessage3));
+            assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage3.getMessage()))
+                    .withFailMessage("Message should not be marked as processed")
+                    .isTrue();
 
-        // timestamp is not changeable any more, since above we had an error
-        timeStampManager.setActualProcessedMessageTimeStamp(ZonedDateTime.now());
-        persistAndAssertTimestampEquals(cartAndMessage3.getMessage().getLastModifiedAt());
+            // timestamp is not changeable any more, since above we had an error
+            timeStampManager.setActualProcessedMessageTimeStamp(ZonedDateTime.now());
+            persistAndAssertTimestampEquals(cartAndMessage3.getMessage().getLastModifiedAt());
 
-        httpClientMock.spyResponse(HttpStatusCode.BAD_GATEWAY_502, "Test 502 response");
-        assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage3.getMessage())).isTrue();
-        orderCreator.write(Collections.singletonList(cartAndMessage3));
-        assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage3.getMessage()))
-                .withFailMessage("Message should not be marked as processed")
-                .isTrue();
+            httpClientMock.spyResponse(HttpStatusCode.BAD_GATEWAY_502, "Test 502 response");
+            assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage3.getMessage())).isTrue();
+            orderCreator.write(Collections.singletonList(cartAndMessage3));
+            assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage3.getMessage()))
+                    .withFailMessage("Message should not be marked as processed")
+                    .isTrue();
 
-        // timestamp is not changeable any more, since above we had an error
-        timeStampManager.setActualProcessedMessageTimeStamp(ZonedDateTime.now());
-        persistAndAssertTimestampEquals(cartAndMessage3.getMessage().getLastModifiedAt());
+            // timestamp is not changeable any more, since above we had an error
+            timeStampManager.setActualProcessedMessageTimeStamp(ZonedDateTime.now());
+            persistAndAssertTimestampEquals(cartAndMessage3.getMessage().getLastModifiedAt());
 
-        httpClientMock.spyResponse(HttpStatusCode.CREATED_201);
-        assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage3.getMessage())).isTrue();
-        orderCreator.write(Collections.singletonList(cartAndMessage3));
-        assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage3.getMessage()))
-                .withFailMessage("Message should be marked as processed")
-                .isFalse();
+            httpClientMock.spyResponse(HttpStatusCode.CREATED_201);
+            assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage3.getMessage())).isTrue();
+            orderCreator.write(Collections.singletonList(cartAndMessage3));
+            assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage3.getMessage()))
+                    .withFailMessage("Message should be marked as processed")
+                    .isFalse();
 
-        // even if the last operation is success - timestamp should not be untouched,
-        // because previous operations failed
-        timeStampManager.setActualProcessedMessageTimeStamp(ZonedDateTime.now());
-        persistAndAssertTimestampEquals(cartAndMessage3.getMessage().getLastModifiedAt());
+            // even if the last operation is success - timestamp should not be untouched,
+            // because previous operations failed
+            timeStampManager.setActualProcessedMessageTimeStamp(ZonedDateTime.now());
+            persistAndAssertTimestampEquals(cartAndMessage3.getMessage().getLastModifiedAt());
+
+            return payment;
+        });
     }
 
     private void persistAndAssertTimestampEquals(ZonedDateTime actualProcessedMessageTimeStamp) {
