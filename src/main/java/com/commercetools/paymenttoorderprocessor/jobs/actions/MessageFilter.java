@@ -48,7 +48,7 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionCreatedOrU
         LOG.debug("Called MessageFilter.process with parameter {}", message);
         final Payment payment = getCorrespondingPayment(message);
         if (payment != null) {
-            if (paymentCreationConfigurationManager.doesTransactionStateMatchConfiguration(message, payment)) {
+            if (paymentCreationConfigurationManager.isTransactionSuccessAndHasMatchingTransactionTypes(message, payment)) {
                 final Optional<Cart> oCart = getCorrespondingCart(payment);
                 if (oCart.isPresent()) {
                     final Cart cart = oCart.get();

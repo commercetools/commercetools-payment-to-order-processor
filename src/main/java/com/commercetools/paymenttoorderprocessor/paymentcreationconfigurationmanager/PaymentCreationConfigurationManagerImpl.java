@@ -15,7 +15,7 @@ public class PaymentCreationConfigurationManagerImpl implements PaymentCreationC
     private String[] transactionTypes;
 
     @Override
-    public boolean doesTransactionStateMatchConfiguration(final PaymentTransactionCreatedOrUpdatedMessage message, final Payment payment) {
+    public boolean isTransactionSuccessAndHasMatchingTransactionTypes(final PaymentTransactionCreatedOrUpdatedMessage message, final Payment payment) {
         final String transactionID = message.getTransactionId();
         final TransactionState stateFromMessage = message.getState();
         return TransactionState.SUCCESS.equals(stateFromMessage)
