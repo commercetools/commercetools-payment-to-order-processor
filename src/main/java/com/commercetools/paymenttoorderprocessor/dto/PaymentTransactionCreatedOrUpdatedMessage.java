@@ -19,9 +19,6 @@ import java.time.ZonedDateTime;
 )
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PaymentTransactionCreatedOrUpdatedMessage extends GenericMessageImpl<Payment> {
-    public static final String MESSAGE_TYPE = "PaymentTransactionCreatedOrUpdatedMessage";
-    public static final MessageDerivateHint<PaymentTransactionCreatedOrUpdatedMessage> MESSAGE_HINT
-            = MessageDerivateHint.ofSingleMessageType("PaymentTransactionCreatedOrUpdatedMessage", PaymentTransactionCreatedOrUpdatedMessage.class, Payment.referenceTypeId());
     private final TransactionState state;
     private final String transactionId;
     private final Transaction transaction;
