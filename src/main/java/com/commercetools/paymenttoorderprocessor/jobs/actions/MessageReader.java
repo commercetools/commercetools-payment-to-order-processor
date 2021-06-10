@@ -17,6 +17,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.time.ZonedDateTime;
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Queue;
 
 /**
@@ -128,7 +129,7 @@ public class MessageReader implements ItemReader<PaymentTransactionCreatedOrUpda
     private MessageQuery buildQuery() {
 
         MessageQuery messageQuery = MessageQuery.of()
-                .plusPredicates(m -> m.type().is(PAYMENT_TRANSACTION_ADDED).or(m.type().is(PAYMENT_TRANSACTION_STATE_CHANGED)))
+                .plusPredicates(m -> m.type().isIn(Arrays.asList(PAYMENT_TRANSACTION_ADDED, PAYMENT_TRANSACTION_STATE_CHANGED)))
                 .withSort(m -> m.lastModifiedAt().sort().asc())
                 .withOffset(offset)
                 .withLimit(RESULTS_PER_PAGE);
