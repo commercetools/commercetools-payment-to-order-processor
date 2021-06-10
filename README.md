@@ -82,6 +82,8 @@ export CREATEORDER_ENDPOINT_URL=https://localhost/createOrder
 * the time overlap prior to lastproccessed timestamp -> to eliminate problems at edge cases
 * the container for the custom object (saving the timestamp)
 * basic HTTP authentication for create order API endpoint
+* if true, messages with type `PaymentTransactionAdded` will be processed (default: `true`)
+* if true, messages with type `PaymentTransactionStateChanged` will be processed (default: `true`)
 
 Example part of a shell script:
 ```
@@ -90,6 +92,8 @@ export CTP_TIMEOUT=30000
 export CTP_MESSAGEREADER_MINUTESOVERLAPPING=2
 export CTP_CUSTOM_OBJECT_CONTAINERNAME=commercetools-payment-to-order-processor
 export CREATEORDER_ENDPOINT_AUTHENTICATION=<username>:<password>
+export CTP_MESSAGES_PROCESSTRANSACTIONADDEDMESSAGES=true
+export CTP_MESSAGES_PROCESSTRANSACTIONSTATECHANGEDMESSAGES=true
 ```
 
 # Build and release

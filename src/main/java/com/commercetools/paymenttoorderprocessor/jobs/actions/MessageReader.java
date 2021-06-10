@@ -7,6 +7,7 @@ import io.sphere.sdk.client.BlockingSphereClient;
 import io.sphere.sdk.messages.Message;
 import io.sphere.sdk.messages.queries.MessageQuery;
 import io.sphere.sdk.queries.PagedQueryResult;
+import io.sphere.sdk.queries.QueryPredicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemReader;
@@ -17,7 +18,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.time.ZonedDateTime;
 import java.util.ArrayDeque;
-import java.util.Arrays;
 import java.util.Queue;
 
 /**
@@ -45,6 +45,12 @@ public class MessageReader implements ItemReader<PaymentTransactionCreatedOrUpda
 
     @Value("${ctp.messagereader.minutesoverlapping}")
     private Integer minutesOverlapping;
+
+    @Value("${ctp.messages.processtransactionaddedmessages:true}")
+    private Boolean processPaymentTransactionAddedMessages;
+
+    @Value("${ctp.messages.processtransactionstatechangedmessages:true}")
+    private Boolean processPaymentTransactionStateChangedMessages;
 
     @Nonnull
     private Queue<PaymentTransactionCreatedOrUpdatedMessage> unprocessedMessagesQueue = new ArrayDeque<>();
@@ -129,7 +135,20 @@ public class MessageReader implements ItemReader<PaymentTransactionCreatedOrUpda
     private MessageQuery buildQuery() {
 
         MessageQuery messageQuery = MessageQuery.of()
-                .plusPredicates(m -> m.type().isIn(Arrays.asList(PAYMENT_TRANSACTION_ADDED, PAYMENT_TRANSACTION_STATE_CHANGED)))
+                .plusPredicates(m -> {
+                    QueryPredicate<Message> query = null;
+                    if (processPaymentTransactionAddedMessages) {
+                        query = m.type().is(PAYMENT_TRANSACTION_ADDED);
+                    }
+                    if (processPaymentTransactionStateChangedMessages) {
+                        if (query != null) {
+                            query = query.or(m.type().is(PAYMENT_TRANSACTION_STATE_CHANGED));
+                        } else {
+                            query = m.type().is(PAYMENT_TRANSACTION_STATE_CHANGED);
+                        }
+                    }
+                    return query;
+                })
                 .withSort(m -> m.lastModifiedAt().sort().asc())
                 .withOffset(offset)
                 .withLimit(RESULTS_PER_PAGE);
