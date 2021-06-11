@@ -1,5 +1,6 @@
 package com.commercetools.paymenttoorderprocessor.helper;
 
+import com.commercetools.paymenttoorderprocessor.dto.PaymentTransactionCreatedOrUpdatedMessage;
 import com.commercetools.paymenttoorderprocessor.fixtures.CartFixtures;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageFilter;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageReader;
@@ -17,7 +18,6 @@ import io.sphere.sdk.payments.*;
 import io.sphere.sdk.payments.commands.PaymentUpdateCommand;
 import io.sphere.sdk.payments.commands.updateactions.AddTransaction;
 import io.sphere.sdk.payments.commands.updateactions.ChangeTransactionState;
-import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 import io.sphere.sdk.queries.PagedQueryResult;
 import io.sphere.sdk.taxcategories.TaxCategory;
 import io.sphere.sdk.taxcategories.queries.TaxCategoryQuery;
@@ -78,7 +78,7 @@ public class CartAndMessageCreateHelper {
         final Payment paymentWithTransactionStateChange = testClient.executeBlocking(PaymentUpdateCommand.of(paymentWithTransaction, changeTransactionState));
 
         //final array so lambda can use it
-        final PaymentTransactionStateChangedMessage[] message = new PaymentTransactionStateChangedMessage[1];
+        final CartAndMessage[] cartAndMessage = new CartAndMessage[1];
 
         //Give Platform time to create messages
         try {
@@ -89,22 +89,25 @@ public class CartAndMessageCreateHelper {
         // because MessageReader is stateful we have to fetch a new instance created payment message
         MessageReader messageReader = context.getBean(MessageReader.class);
 
-        //get the correct message to read
+        //get the correct message to read and return correct cartAndMessage
         assertEventually(() -> {
-            message[0] = messageReader.read();
-            assertThat(message[0]).isNotNull();
-            assertThat(message[0].getResource().getId()).isEqualTo(payment.getId());
+            PaymentTransactionCreatedOrUpdatedMessage message = messageReader.read();
+            assertThat(message).isNotNull();
+            assertThat(message.getResource().getId()).isEqualTo(payment.getId());
+            //test if message is processed correctly (i.e. -> get the corresponding CardAndMessage-Wrapper)
+            final CartAndMessage cartAndMessageTemp = messageProcessor.process(message);
+            assertThat(cartAndMessageTemp).isNotNull()
+                    .withFailMessage(format("Can't create message CartAndMessage for the payment [%s]", payment));
+            final Cart cartToTest = cartAndMessageTemp.getCart();
+            assertThat(cartToTest).isNotNull();
+            assertThat(cartToTest.getId()).isEqualTo(cartWithPayment.getId())
+                    .withFailMessage(format("Processed cart id [%s] is incorrect", cartToTest.getId()));
+
+            cartAndMessage[0] = cartAndMessageTemp;
         });
 
-        //test if message is processed correctly (i.e. -> get the corresponding CardAndMessage-Wrapper)
-        final CartAndMessage cartAndMessage = messageProcessor.process(message[0]);
-        assertThat(cartAndMessage).isNotNull()
-                .withFailMessage(format("Can't create message CartAndMessage for the payment [%s]", payment));
-        final Cart cartToTest = cartAndMessage.getCart();
-        assertThat(cartToTest).isNotNull();
-        assertThat(cartToTest.getId()).isEqualTo(cartWithPayment.getId())
-                .withFailMessage(format("Processed cart id [%s] is incorrect", cartToTest.getId()));
+        assertThat(cartAndMessage[0]).isNotNull();
 
-        return cartAndMessage;
+        return cartAndMessage[0];
     }
 }

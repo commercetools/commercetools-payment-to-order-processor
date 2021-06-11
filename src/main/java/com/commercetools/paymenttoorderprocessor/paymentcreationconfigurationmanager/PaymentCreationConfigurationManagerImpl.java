@@ -1,8 +1,8 @@
 package com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager;
 
+import com.commercetools.paymenttoorderprocessor.dto.PaymentTransactionCreatedOrUpdatedMessage;
 import io.sphere.sdk.payments.Payment;
 import io.sphere.sdk.payments.TransactionState;
-import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Arrays;
@@ -15,9 +15,10 @@ public class PaymentCreationConfigurationManagerImpl implements PaymentCreationC
     private String[] transactionTypes;
 
     @Override
-    public boolean doesTransactionStateMatchConfiguration(final PaymentTransactionStateChangedMessage message, final Payment payment) {
+    public boolean isTransactionSuccessAndHasMatchingTransactionTypes(final PaymentTransactionCreatedOrUpdatedMessage message, final Payment payment) {
         final String transactionID = message.getTransactionId();
-        return TransactionState.SUCCESS.equals(message.getState())
+        final TransactionState stateFromMessage = message.getState();
+        return TransactionState.SUCCESS.equals(stateFromMessage)
                 && (payment.getTransactions().stream().anyMatch(
                 transaction -> transactionID.equals(transaction.getId())
                         && Arrays.stream(transactionTypes).anyMatch(type -> equalsIgnoreCase(type, transaction.getType().toString()))));

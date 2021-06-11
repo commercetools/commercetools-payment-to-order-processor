@@ -23,7 +23,7 @@
 ## Goal of the service
 In general orders are created from carts by the frontend. For redirect payments like Credit card 3D Secure, Paypal or Sofortüberweisung shop front end is confronted with an issue that in some cases there is a valid payment but no order as user did not reach front end's success URL, which creates an order from current cart. One of the use cases would be lost internet connection or accidentally closed tab after successfully issued payment. Scheduled processor ensures that for every successful payment and valid cart an order can be still asynchronously created. More details on the process can be found [here](https://github.com/commercetools/commercetools-payment-to-order-processor/blob/master/doc/REQUIREMENTS.MD)
 
-The service polls `PaymentTransactionStateChanged` messages from the commercetools platform since the `lastProcessedMessageTimeStamp` stored in a custom object in the platform.
+The service polls `PaymentTransactionStateChanged` and `PaymentTransactionAdded` messages from the commercetools platform since the `lastProcessedMessageTimeStamp` stored in a custom object in the platform.
 If the PaymentTransaction type matches the configured values and the total price of the cart equals the amount of the transaction and is not already ordered then the service has to trigger order creation.
 
 ## Creating the order
@@ -82,6 +82,8 @@ export CREATEORDER_ENDPOINT_URL=https://localhost/createOrder
 * the time overlap prior to lastproccessed timestamp -> to eliminate problems at edge cases
 * the container for the custom object (saving the timestamp)
 * basic HTTP authentication for create order API endpoint
+* if true, messages with type `PaymentTransactionAdded` will be processed (default: `true`)
+* if true, messages with type `PaymentTransactionStateChanged` will be processed (default: `true`)
 
 Example part of a shell script:
 ```
@@ -90,6 +92,8 @@ export CTP_TIMEOUT=30000
 export CTP_MESSAGEREADER_MINUTESOVERLAPPING=2
 export CTP_CUSTOM_OBJECT_CONTAINERNAME=commercetools-payment-to-order-processor
 export CREATEORDER_ENDPOINT_AUTHENTICATION=<username>:<password>
+export CTP_MESSAGES_PROCESSTRANSACTIONADDEDMESSAGES=true
+export CTP_MESSAGES_PROCESSTRANSACTIONSTATECHANGEDMESSAGES=true
 ```
 
 # Build and release

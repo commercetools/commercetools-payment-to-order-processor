@@ -1,6 +1,7 @@
 package com.commercetools.paymenttoorderprocessor.jobs.actions;
 
 import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
+import com.commercetools.paymenttoorderprocessor.dto.PaymentTransactionCreatedOrUpdatedMessage;
 import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager.PaymentCreationConfigurationManager;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
 import com.commercetools.paymenttoorderprocessor.wrapper.CartAndMessage;
@@ -10,7 +11,6 @@ import io.sphere.sdk.carts.queries.CartQuery;
 import io.sphere.sdk.client.BlockingSphereClient;
 import io.sphere.sdk.payments.Payment;
 import io.sphere.sdk.payments.Transaction;
-import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 import io.sphere.sdk.payments.queries.PaymentByIdGet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,11 +24,11 @@ import java.util.List;
 import java.util.Optional;
 
 /***
- * Checks if PaymentTransactionStateChangedMessage and corresponding Cart is viable for creation of an Order
+ * Checks if PaymentTransactionCreatedOrUpdatedMessage and corresponding Cart is viable for creation of an Order
  * @author mht@dotsource.de
  *
  */
-public class MessageFilter implements ItemProcessor<PaymentTransactionStateChangedMessage, CartAndMessage> {
+public class MessageFilter implements ItemProcessor<PaymentTransactionCreatedOrUpdatedMessage, CartAndMessage> {
     private static final Logger LOG = LoggerFactory.getLogger(MessageFilter.class);
 
     @Autowired
@@ -44,11 +44,11 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
     private TimeStampManager timeStampManager;
 
     @Override
-    public CartAndMessage process(PaymentTransactionStateChangedMessage message) {
+    public CartAndMessage process(PaymentTransactionCreatedOrUpdatedMessage message) {
         LOG.debug("Called MessageFilter.process with parameter {}", message);
         final Payment payment = getCorrespondingPayment(message);
         if (payment != null) {
-            if (paymentCreationConfigurationManager.doesTransactionStateMatchConfiguration(message, payment)) {
+            if (paymentCreationConfigurationManager.isTransactionSuccessAndHasMatchingTransactionTypes(message, payment)) {
                 final Optional<Cart> oCart = getCorrespondingCart(payment);
                 if (oCart.isPresent()) {
                     final Cart cart = oCart.get();
@@ -70,7 +70,7 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
                     messageProcessedManager.setMessageIsProcessed(message);
                 }
             } else {
-                LOG.debug("PaymentTransactionStateChangedMessage {} has incorrect transaction state to be processed.", message.getId());
+                LOG.debug("PaymentTransactionCreatedOrUpdatedMessage {} has incorrect transaction state to be processed.", message.getId());
                 messageProcessedManager.setMessageIsProcessed(message);
             }
         } else {
@@ -86,7 +86,7 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
     }
 
 
-    private boolean isCartAmountEqualToTransaction(Cart cart, final Payment payment, PaymentTransactionStateChangedMessage message) {
+    private boolean isCartAmountEqualToTransaction(Cart cart, final Payment payment, PaymentTransactionCreatedOrUpdatedMessage message) {
         final MonetaryAmount cartAmount = cart.getTotalPrice();
         final Optional<Transaction> transaction = payment
                 .getTransactions().stream().filter(t -> t.getId().equals(message.getTransactionId())).findFirst();
@@ -107,7 +107,7 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionStateChang
     }
 
     @Nullable
-    private Payment getCorrespondingPayment(final PaymentTransactionStateChangedMessage message) {
+    private Payment getCorrespondingPayment(final PaymentTransactionCreatedOrUpdatedMessage message) {
         final String paymentId = message.getResource().getId();
         LOG.debug("Query CTP for Payment with ID {}", paymentId);
         final PaymentByIdGet paymentByIdGet = PaymentByIdGet.of(paymentId);

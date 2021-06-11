@@ -1,5 +1,6 @@
 package com.commercetools.paymenttoorderprocessor;
 
+import com.commercetools.paymenttoorderprocessor.dto.PaymentTransactionCreatedOrUpdatedMessage;
 import com.commercetools.paymenttoorderprocessor.fixtures.PaymentFixtures;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageReader;
 import com.commercetools.paymenttoorderprocessor.testconfiguration.BasicTestConfiguration;
@@ -9,7 +10,6 @@ import io.sphere.sdk.payments.*;
 import io.sphere.sdk.payments.commands.PaymentUpdateCommand;
 import io.sphere.sdk.payments.commands.updateactions.AddTransaction;
 import io.sphere.sdk.payments.commands.updateactions.ChangeTransactionState;
-import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,7 +50,7 @@ public class MessageReaderIntegrationTest extends IntegrationTest {
     public void messageReaderIntegrationTest() throws Exception {
         PaymentFixtures.withPayment(testClient, payment-> {
 
-            //Preconditions create message in commercetoolsplatform:
+            //Preconditions create message in commercetools platform:
             final TransactionDraft transactionDraft = TransactionDraftBuilder.of(TransactionType.AUTHORIZATION, EUR_20).state(TransactionState.INITIAL).build();
             final AddTransaction addTransaction = AddTransaction.of(transactionDraft);
             final Payment paymentWithTransaction = testClient.executeBlocking(PaymentUpdateCommand.of(payment, addTransaction));
@@ -67,7 +67,7 @@ public class MessageReaderIntegrationTest extends IntegrationTest {
             }
             //Check if the message will be read:
             assertEventually(() -> {
-                PaymentTransactionStateChangedMessage message = messageReader.read();
+                PaymentTransactionCreatedOrUpdatedMessage message = messageReader.read();
                 assertThat(message).isNotNull();
                 assertThat(message.getResource().getId()).isEqualTo(payment.getId());
                 assertThat(message.getState()).isEqualTo(TransactionState.SUCCESS);

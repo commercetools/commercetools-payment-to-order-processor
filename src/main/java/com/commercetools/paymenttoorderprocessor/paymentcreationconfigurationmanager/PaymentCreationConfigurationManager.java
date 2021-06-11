@@ -1,8 +1,8 @@
 package com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager;
 
+import com.commercetools.paymenttoorderprocessor.dto.PaymentTransactionCreatedOrUpdatedMessage;
 import io.sphere.sdk.payments.Payment;
-import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 
 public interface PaymentCreationConfigurationManager {
-    boolean doesTransactionStateMatchConfiguration(PaymentTransactionStateChangedMessage message, Payment payment);
+    boolean isTransactionSuccessAndHasMatchingTransactionTypes(PaymentTransactionCreatedOrUpdatedMessage message, Payment payment);
 }

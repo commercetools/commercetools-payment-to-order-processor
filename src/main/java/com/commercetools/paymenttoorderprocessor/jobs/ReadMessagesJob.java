@@ -2,6 +2,7 @@ package com.commercetools.paymenttoorderprocessor.jobs;
 
 import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
 import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManagerImpl;
+import com.commercetools.paymenttoorderprocessor.dto.PaymentTransactionCreatedOrUpdatedMessage;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageFilter;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageReader;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.OrderCreator;
@@ -10,7 +11,6 @@ import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationman
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManagerImpl;
 import com.commercetools.paymenttoorderprocessor.wrapper.CartAndMessage;
-import io.sphere.sdk.payments.messages.PaymentTransactionStateChangedMessage;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
@@ -46,13 +46,13 @@ public class ReadMessagesJob {
 
     @Bean
     @DependsOn({"blockingSphereClient", "timeStampManager", "messageProcessedManager"})
-    public ItemReader<PaymentTransactionStateChangedMessage> reader() {
+    public ItemReader<PaymentTransactionCreatedOrUpdatedMessage> reader() {
         return new MessageReader();
     }
 
     @Bean
     @DependsOn({"blockingSphereClient", "paymentCreationConfigurationManager", "messageProcessedManager"})
-    public ItemProcessor<PaymentTransactionStateChangedMessage, CartAndMessage> processor() {
+    public ItemProcessor<PaymentTransactionCreatedOrUpdatedMessage, CartAndMessage> processor() {
         return new MessageFilter();
     }
 
@@ -91,11 +91,11 @@ public class ReadMessagesJob {
     }
 
     @Bean
-    public Step loadMessages(ItemReader<PaymentTransactionStateChangedMessage> reader,
-                             ItemProcessor<PaymentTransactionStateChangedMessage, CartAndMessage> processor,
+    public Step loadMessages(ItemReader<PaymentTransactionCreatedOrUpdatedMessage> reader,
+                             ItemProcessor<PaymentTransactionCreatedOrUpdatedMessage, CartAndMessage> processor,
                              ItemWriter<CartAndMessage> writer) {
         return steps.get(STEP_LOAD_MESSAGES)
-                .<PaymentTransactionStateChangedMessage, CartAndMessage>chunk(1)
+                .<PaymentTransactionCreatedOrUpdatedMessage, CartAndMessage>chunk(1)
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)

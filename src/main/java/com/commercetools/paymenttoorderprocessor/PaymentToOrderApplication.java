@@ -17,8 +17,7 @@ import org.springframework.context.annotation.DependsOn;
 import java.util.concurrent.TimeUnit;
 
 @Configuration
-@SpringBootApplication
-@EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
+@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
 public class PaymentToOrderApplication {
 
     public static void main(String[] args) {
