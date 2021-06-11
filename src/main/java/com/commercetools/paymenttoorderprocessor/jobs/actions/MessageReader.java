@@ -136,18 +136,18 @@ public class MessageReader implements ItemReader<PaymentTransactionCreatedOrUpda
 
         MessageQuery messageQuery = MessageQuery.of()
                 .plusPredicates(m -> {
-                    QueryPredicate<Message> query = null;
+                    QueryPredicate<Message> predicate = null;
                     if (processPaymentTransactionAddedMessages) {
-                        query = m.type().is(PAYMENT_TRANSACTION_ADDED);
+                        predicate = m.type().is(PAYMENT_TRANSACTION_ADDED);
                     }
                     if (processPaymentTransactionStateChangedMessages) {
-                        if (query != null) {
-                            query = query.or(m.type().is(PAYMENT_TRANSACTION_STATE_CHANGED));
+                        if (predicate != null) {
+                            predicate = predicate.or(m.type().is(PAYMENT_TRANSACTION_STATE_CHANGED));
                         } else {
-                            query = m.type().is(PAYMENT_TRANSACTION_STATE_CHANGED);
+                            predicate = m.type().is(PAYMENT_TRANSACTION_STATE_CHANGED);
                         }
                     }
-                    return query;
+                    return predicate;
                 })
                 .withSort(m -> m.lastModifiedAt().sort().asc())
                 .withOffset(offset)
