@@ -135,20 +135,6 @@ public class MessageReader implements ItemReader<PaymentTransactionCreatedOrUpda
     private MessageQuery buildQuery() {
 
         MessageQuery messageQuery = MessageQuery.of()
-                .plusPredicates(m -> {
-                    QueryPredicate<Message> predicate = null;
-                    if (processPaymentTransactionAddedMessages) {
-                        predicate = m.type().is(PAYMENT_TRANSACTION_ADDED);
-                    }
-                    if (processPaymentTransactionStateChangedMessages) {
-                        if (predicate != null) {
-                            predicate = predicate.or(m.type().is(PAYMENT_TRANSACTION_STATE_CHANGED));
-                        } else {
-                            predicate = m.type().is(PAYMENT_TRANSACTION_STATE_CHANGED);
-                        }
-                    }
-                    return predicate;
-                })
                 .withSort(m -> m.lastModifiedAt().sort().asc())
                 .withOffset(offset)
                 .withLimit(RESULTS_PER_PAGE);
@@ -159,6 +145,21 @@ public class MessageReader implements ItemReader<PaymentTransactionCreatedOrUpda
             messageQuery = messageQuery.plusPredicates(
                     m -> m.lastModifiedAt().isGreaterThan(timestamp.minusMinutes(minutesOverlapping)));
         }
+
+        messageQuery = messageQuery.plusPredicates(m -> {
+            QueryPredicate<Message> predicate = null;
+            if (processPaymentTransactionAddedMessages) {
+                predicate = m.type().is(PAYMENT_TRANSACTION_ADDED);
+            }
+            if (processPaymentTransactionStateChangedMessages) {
+                if (predicate != null) {
+                    predicate = predicate.or(m.type().is(PAYMENT_TRANSACTION_STATE_CHANGED));
+                } else {
+                    predicate = m.type().is(PAYMENT_TRANSACTION_STATE_CHANGED);
+                }
+            }
+            return predicate;
+        });
 
         return messageQuery;
     }
