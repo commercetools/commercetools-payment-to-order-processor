@@ -1,0 +1,15 @@
+version: 2
+updates:
+- package-ecosystem: maven
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "04:00"
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: com.commercetools.sdk.jvm.core:commercetools-models
+    versions:
+    - 1.60.0
+  - dependency-name: com.commercetools.sdk.jvm.core:commercetools-java-client
+    versions:
+    - 1.60.0
