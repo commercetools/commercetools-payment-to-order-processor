@@ -30,7 +30,6 @@ public final class ProcessorSolutionInfo extends SolutionInfo {
             } catch (Exception e) {
                 LOG.error("Cannot read pom.xml", e);
             }
-
         }
         setVersion(version);
     }
