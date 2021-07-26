@@ -8,7 +8,7 @@ public final class ProcessorSolutionInfo extends SolutionInfo {
 
     /**
      * Extends {@link SolutionInfo} class of the JVM SDK to append to the User-Agent header with
-     * information of the commercetools-sync-java library
+     * information of the commercetools-payment-to-order-processor library
      */
     public ProcessorSolutionInfo() {
         setName(LIB_NAME);
