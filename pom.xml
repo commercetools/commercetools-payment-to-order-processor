@@ -17,7 +17,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
         <logStashLogbackEncoder.version>6.6</logStashLogbackEncoder.version>
-        <logback-json-classic.version>1.2.4</logback-json-classic.version>
+            <logback-json-classic.version>1.2.4-groovyless</logback-json-classic.version>
         <jul-to-slf4.version>1.7.32</jul-to-slf4.version>
         <commercetools-jvm-sdk.version>2.0.0</commercetools-jvm-sdk.version>
     </properties>
