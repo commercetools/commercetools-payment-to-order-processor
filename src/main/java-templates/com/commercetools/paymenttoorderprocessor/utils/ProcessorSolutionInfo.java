@@ -2,8 +2,6 @@ package com.commercetools.paymenttoorderprocessor.utils;
 
 import io.sphere.sdk.client.SolutionInfo;
 
-
-
 public final class ProcessorSolutionInfo extends SolutionInfo {
     private static final String LIB_NAME = "commercetools-payment-to-order-processor";
     private String version = "${version}";
