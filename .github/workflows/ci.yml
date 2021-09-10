@@ -20,7 +20,7 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 8
-    - name: Build with Gradle
-      run: ./gradlew clean build
+    - name: Build with Maven
+      run: ./mvn verify
       env:
         CTP_PROJECT_CONFIG: ${{ secrets.CTP_PROJECT_CONFIG }}
