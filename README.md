@@ -113,10 +113,6 @@ export IT_CLIENT_SECRET=
 mvn clean test
 ```
 
-## Travis build settings
-
-For Travis CI use [build settings page](https://travis-ci.org/commercetools/commercetools-payment-to-order-processor/settings).
-
 ## Local run and debug
 
 Follow the documentation how to run
