@@ -36,4 +36,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: commercetools/commercetools-payment-to-order-processor:${{ steps.vars.outputs.tag }}
+          tags: commercetools/payment-to-order-processor:${{ steps.vars.outputs.tag }}
