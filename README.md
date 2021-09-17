@@ -159,4 +159,4 @@ Additionally to simplify build:
  git tag -a v1.0.1 -m "Minor text adjustments."
  ```
  
-- via [Github UI](https://github.com/commercetools/commercetools-email-retry-processor/releases)
+- via [Github UI](https://github.com/commercetools/commercetools-payment-to-order-processor/releases)
