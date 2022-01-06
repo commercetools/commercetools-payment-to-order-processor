@@ -8,15 +8,16 @@
   - [Goal of the service](#goal-of-the-service)
   - [Creating the order](#creating-the-order)
   - [Using this service](#using-this-service)
+    - [Configure first processed message time bound](#configure-first-processed-message-time-bound)
   - [Congfiguration values](#congfiguration-values)
-    - [Required values](#required-values)
-    - [Optional values](#optional-values)
+    - [Required](#required)
+    - [Optional](#optional)
 - [Build and release](#build-and-release)
   - [Build](#build)
+  - [Configuration values for tests](#configuration-values-for-tests)
   - [Run tests](#run-tests)
-  - [Travis build settings](#travis-build-settings)
   - [Local run and debug](#local-run-and-debug)
-  - [Docker image](#docker-image)
+  - [Build and deploy](#build-and-deploy)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -62,22 +63,27 @@ In the example below we want to start messages processing from _Friday, April 6,
 
 ## Congfiguration values
 
-| Name | Description | Required | Default value |
-| --- | --- | --- | --- |
-| CTP_CREDENTIALS_CLIENTID | OAuth 2.0 `client_id` and can be used to obtain a token. | YES | |
-| CTP_CREDENTIALS_CLIENTSECRET | OAuth 2.0 `client_secret` and can be used to obtain a token.	 | YES ||
-| CTP_CREDENTIALS_PROJECTKEY | commercetools project key | YES ||
-| CREATEORDER_ENCRYPTION_SECRET | Encryption secret used for order creation API | YES ||
-| CREATEORDER_ENDPOINT_URL | URL used for order creation API | YES ||
-| CREATEORDER_CREATEORDERON | Comma separated list. On which payment transactions will be an order created. | NO | `AUTHORIZATION,CHARGE` |
-| CTP_CREATEORDERAPI_TIMEOUT | Milliseconds to wait for create order API response | NO | 40000 |
-| CREATEORDER_RESPONSE_LOGGINGLENGTHLIMIT | Max number of character to log from API response body. | NO | 500
-| CTP_TIMEOUT | Timeout for requests to CTP in ms | NO | 30000 | 
-| CTP_MESSAGEREADER_MINUTESOVERLAPPING | The time overlap prior to last proccessed timestamp in minute. The goal is to eliminate problems at edge cases caused by eventual consistency. | NO | 2 | 
-| CTP_CUSTOM_OBJECT_CONTAINERNAME | The container name for the custom object containing the processed message IDs | NO | `commercetools-payment-to-order-processor` | 
-| CREATEORDER_ENDPOINT_AUTHENTICATION | Basic HTTP authentication for create order API endpoint. | NO | | 
-| CTP_MESSAGES_PROCESSTRANSACTIONADDEDMESSAGES | If true, messages with type `PaymentTransactionAdded` will be processed | NO | true | 
-| CTP_MESSAGES_PROCESSTRANSACTIONSTATECHANGEDMESSAGES | If true, messages with type `PaymentTransactionStateChanged` will be processed | NO | true |
+### Required
+| Name | Description | Default value |
+| --- | --- | --- |
+| CTP_CREDENTIALS_CLIENTID | OAuth 2.0 `client_id` and can be used to obtain a token. |  |
+| CTP_CREDENTIALS_CLIENTSECRET | OAuth 2.0 `client_secret` and can be used to obtain a token.	 | |
+| CTP_CREDENTIALS_PROJECTKEY | commercetools project key | |
+| CREATEORDER_ENCRYPTION_SECRET | Encryption secret used for order creation API | |
+| CREATEORDER_ENDPOINT_URL | URL used for order creation API | |
+
+### Optional
+| Name | Description | Default value |
+| --- | --- | --- |
+| CREATEORDER_CREATEORDERON | Comma separated list. On which payment transactions will be an order created. | `AUTHORIZATION,CHARGE` |
+| CTP_CREATEORDERAPI_TIMEOUT | Milliseconds to wait for create order API response | 40000 |
+| CREATEORDER_RESPONSE_LOGGINGLENGTHLIMIT | Max number of character to log from API response body. | 500
+| CTP_TIMEOUT | Timeout for requests to CTP in ms | 30000 | 
+| CTP_MESSAGEREADER_MINUTESOVERLAPPING | The time overlap prior to last proccessed timestamp in minute. The goal is to eliminate problems at edge cases caused by eventual consistency. | 2 | 
+| CTP_CUSTOM_OBJECT_CONTAINERNAME | The container name for the custom object containing the processed message IDs | `commercetools-payment-to-order-processor` | 
+| CREATEORDER_ENDPOINT_AUTHENTICATION | Basic HTTP authentication for create order API endpoint. | | 
+| CTP_MESSAGES_PROCESSTRANSACTIONADDEDMESSAGES | If true, messages with type `PaymentTransactionAdded` will be processed | true | 
+| CTP_MESSAGES_PROCESSTRANSACTIONSTATECHANGEDMESSAGES | If true, messages with type `PaymentTransactionStateChanged` will be processed | true |
 
 # Build and release
 
