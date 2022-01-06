@@ -10,3 +10,4 @@
 **/resources/config/application.properties
 .idea
 payment-to-order-processor.iml
+.DS_Store
