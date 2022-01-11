@@ -29,8 +29,8 @@ If the PaymentTransaction type matches the configured values and the cart is not
 
 ## Creating the order
 This service does not create orders itself, because that would result in duplicated implementation of order 
-creation: In the shop code base and in this service. Therefore, it just calls, over `HTTP GET`, a configured URL 
-(i.e.: shop front end) with the encrypted cart ID as parameter "encryptedCartId". The encryption algorithm is `Blowfish` with `Base64` String encoding.
+creation: in the shop code base and in this service. Therefore, it just calls, over `HTTP GET`, a configured URL 
+(i.e.: shop front end) with the cart ID as parameter "cartId".
 
 ## Using this service
 Just start the docker container with required configuration (environment) variables set.
@@ -69,7 +69,6 @@ In the example below we want to start messages processing from _Friday, April 6,
 | CTP_CREDENTIALS_CLIENTID | OAuth 2.0 `client_id` and can be used to obtain a token. |  |
 | CTP_CREDENTIALS_CLIENTSECRET | OAuth 2.0 `client_secret` and can be used to obtain a token.	 | |
 | CTP_CREDENTIALS_PROJECTKEY | commercetools project key | |
-| CREATEORDER_ENCRYPTION_SECRET | Encryption secret used for order creation API | |
 | CREATEORDER_ENDPOINT_URL | URL used for order creation API | |
 
 ### Optional

@@ -1,10 +1,10 @@
 # Create Order API Requirements
 
 Create order API (called from `CREATEORDER_ENDPOINT_URL`) should be implemented as a GET service which accepts 
-`encryptedCartId` query parameter with Blowfish encrypted cart id string, for instance:
+`cartId` query parameter with cart id string, for instance:
 
   ```
-  http://localhost:9000/API/order/createOrder?encryptedCartId=eDIeqi7seRTjdYRqm%2BOxy5Qcbc38dXaEgftHjQcr6M7HO125Tg%2BnUg%3D%3D
+  http://localhost:9000/API/order/createOrder?cartId=159da30a-cb90-4238-96fd-9a35433c67f7
   ```
   
 ## API HTTP response
@@ -45,8 +45,6 @@ Create order API (called from `CREATEORDER_ENDPOINT_URL`) should be implemented 
       </tr>
       <tr>
         <td rowspan='4' valign='middle'>not 200 or 201</td>
-        <td>cart id can't be decrypted</td>
-        <td>verify encryption keys and methods</td>
       </tr>
       <tr>
         <td>cart can't be found by id</td>

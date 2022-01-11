@@ -15,13 +15,6 @@ import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.SecretKeySpec;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -31,20 +24,12 @@ import java.util.concurrent.TimeoutException;
 import static org.apache.commons.lang3.StringUtils.isNoneEmpty;
 
 /***
- * Calls configured OrderCreation-Endpoint and sends encrypted Cart Json as Body
+ * Calls configured OrderCreation-Endpoint and sends Cart ID Json as Body
  * @author mht@dotsource.de
  *
  */
 public class OrderCreator implements ItemWriter<CartAndMessage> {
     private static final Logger LOG = LoggerFactory.getLogger(OrderCreator.class);
-
-    private static final String ENCRYPTIONALGORITHM = "Blowfish";
-
-    /**
-     * Must be exactly 16 characters for used {@link #ENCRYPTIONALGORITHM} == Blowfish method.
-     */
-    @Value("${createorder.encryption.secret}")
-    private String encryptionKey;
 
     /**
      * Must be without trailing slash.
@@ -92,14 +77,14 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
     private void sendRequestToCreateOrder(CartAndMessage cartAndMessage) {
         final Cart cart = cartAndMessage.getCart();
 
-        final String encryptedCartId = encrypt(cart.getId());
-        if (encryptedCartId == null) {
+        final String cartId = cart.getId();
+        if (cartId == null) {
             timeStampManager.processingMessageFailed();
             return;
         }
 
         QueryStringEncoder queryStringEncoder = new QueryStringEncoder(urlstring);
-        queryStringEncoder.addParam("encryptedCartId", encryptedCartId);
+        queryStringEncoder.addParam("cartId", cartId);
 
         HttpHeaders httpHeaders = HttpHeaders.empty();
 
@@ -112,7 +97,7 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
 
         HttpResponse httpResponse;
         try {
-            //sending encrypted cart to API
+            //sending cart ID to API
             httpResponse = httpClient.execute(httpRequest).toCompletableFuture()
                     .get(createOrderTimeout, TimeUnit.MILLISECONDS);
 
@@ -158,21 +143,6 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
         LOG.error("Caught {} exception while calling Shop URL {} to create Order from Cart {}. Exception message: [{}]",
                 exceptionType, urlstring, cart.getId(), e.toString());
         timeStampManager.processingMessageFailed();
-    }
-
-    private String encrypt(String value) {
-        try {
-            byte[] keyData = encryptionKey.getBytes();
-            SecretKeySpec ks = new SecretKeySpec(keyData, ENCRYPTIONALGORITHM);
-            Cipher cipher = Cipher.getInstance(ENCRYPTIONALGORITHM);
-            cipher.init(Cipher.ENCRYPT_MODE, ks);
-            byte[] encrypted = cipher.doFinal(value.getBytes());
-            return Base64.encodeBase64String(encrypted);
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
-            LOG.error("Encryption of http body failed. With Exception {}", e.toString());
-        }
-
-        return null;
     }
 
     /**

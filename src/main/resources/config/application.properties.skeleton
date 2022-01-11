@@ -6,7 +6,6 @@
 ctp.credentials.projectkey=
 ctp.credentials.clientid=
 ctp.credentials.clientsecret=
-createorder.encryption.secret=
 createorder.endpoint.url=
 createorder.endpoint.authentication=<<LOGIN>>:<<PASSWORD>>
 
