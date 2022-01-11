@@ -75,7 +75,7 @@ In the example below we want to start messages processing from _Friday, April 6,
 ### Optional
 | Name | Description | Default value |
 | --- | --- | --- |
-| CREATEORDER_CREATEORDERON | Comma separated list. On which payment transactions will be an order created. | `AUTHORIZATION,CHARGE` |
+| CREATEORDER_CREATEORDERON | Comma separated list of payment status, on which an order will be created. | `AUTHORIZATION,CHARGE` |
 | CTP_CREATEORDERAPI_TIMEOUT | Milliseconds to wait for create order API response | 40000 |
 | CREATEORDER_RESPONSE_LOGGINGLENGTHLIMIT | Max number of character to log from API response body. | 500
 | CTP_TIMEOUT | Timeout for requests to CTP in ms | 30000 | 
