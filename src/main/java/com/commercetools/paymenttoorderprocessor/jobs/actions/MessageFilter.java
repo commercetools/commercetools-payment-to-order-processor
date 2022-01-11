@@ -53,14 +53,7 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionCreatedOrU
                 if (oCart.isPresent()) {
                     final Cart cart = oCart.get();
                     if (cart.getCartState() != CartState.ORDERED) {
-                        if (isCartAmountEqualToTransaction(cart, payment, message)) {
-                            return new CartAndMessage(cart, message);
-                        } else {
-                            LOG.error("Cannot create Order for Cart {}. "
-                                       + "The transaction amout of Transaction {} does not match cart.",
-                                        cart.getId(), message.getTransactionId());
-                            messageProcessedManager.setMessageIsProcessed(message);
-                        }
+                        return new CartAndMessage(cart, message);
                     } else {
                         LOG.debug("Cart {} is already ordered nothing to do.", cart.getId());
                         messageProcessedManager.setMessageIsProcessed(message);
@@ -83,14 +76,6 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionCreatedOrU
         timeStampManager.setActualProcessedMessageTimeStamp(message.getLastModifiedAt());
 
         return null;
-    }
-
-
-    private boolean isCartAmountEqualToTransaction(Cart cart, final Payment payment, PaymentTransactionCreatedOrUpdatedMessage message) {
-        final MonetaryAmount cartAmount = cart.getTotalPrice();
-        final Optional<Transaction> transaction = payment
-                .getTransactions().stream().filter(t -> t.getId().equals(message.getTransactionId())).findFirst();
-        return (cartAmount.equals(transaction.isPresent() ? transaction.get().getAmount() : null));
     }
 
     private Optional<Cart> getCorrespondingCart(final Payment payment) {
