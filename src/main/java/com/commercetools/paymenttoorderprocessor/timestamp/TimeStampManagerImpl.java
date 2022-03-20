@@ -69,8 +69,8 @@ public class TimeStampManagerImpl implements TimeStampManager {
     public void persistLastProcessedMessageTimeStamp() {
         if (lastActualProcessedMessageTimeStamp != null) {
             final CustomObjectDraft<TimeStamp> draft = createCustomObjectDraft();
-            final CustomObjectUpsertCommand<TimeStamp> updateCommad = CustomObjectUpsertCommand.of(draft);
-            client.executeBlocking(updateCommad);
+            final CustomObjectUpsertCommand<TimeStamp> updateCommand = CustomObjectUpsertCommand.of(draft);
+            client.executeBlocking(updateCommand);
             LOG.info("Set new last processed timestamp: {}", lastActualProcessedMessageTimeStamp.toString());
         } else {
             LOG.info("No one message was processed - lastTimestamp is unchanged: [{}]",

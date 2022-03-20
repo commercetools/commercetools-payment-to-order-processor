@@ -1,7 +1,5 @@
 package com.commercetools.paymenttoorderprocessor.jobs;
 
-import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
-import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManagerImpl;
 import com.commercetools.paymenttoorderprocessor.dto.PaymentTransactionCreatedOrUpdatedMessage;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageFilter;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageReader;
@@ -66,12 +64,6 @@ public class ReadMessagesJob {
     @DependsOn("timeStampManager")
     public JobExecutionListener listener() {
         return new JobListener();
-    }
-
-    @Bean
-    @DependsOn("blockingSphereClient")
-    public MessageProcessedManager messageProcessedManager() {
-        return new MessageProcessedManagerImpl();
     }
 
     @Bean

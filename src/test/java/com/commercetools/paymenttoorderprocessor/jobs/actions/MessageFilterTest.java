@@ -1,6 +1,5 @@
 package com.commercetools.paymenttoorderprocessor.jobs.actions;
 
-import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
 import com.commercetools.paymenttoorderprocessor.dto.PaymentTransactionCreatedOrUpdatedMessage;
 import com.commercetools.paymenttoorderprocessor.testconfiguration.ExtendedTestConfiguration;
 import com.commercetools.paymenttoorderprocessor.testconfiguration.HttpClientMockConfiguration;
@@ -52,9 +51,6 @@ public class MessageFilterTest {
     @Autowired
     private BlockingSphereClient client;
 
-    @Autowired
-    private MessageProcessedManager messageProcessedManager;
-
     private PaymentTransactionCreatedOrUpdatedMessage testMessage;
 
     @Before
@@ -64,19 +60,16 @@ public class MessageFilterTest {
 
     @Test
     public void messageProcessor_withEmptyPayment_updatesLastProcessedMessageTimeStamp() {
-        assertThat(messageProcessedManager.isMessageUnprocessed(testMessage)).isTrue();
         final CartAndMessage cartAndMessage = messageProcessor.process(testMessage);
         assertThat(cartAndMessage).isNull();
 
         // when MessageFilter.process() returns null - timestamp is updated
         timeStampManager.persistLastProcessedMessageTimeStamp();
         assertThat(timeStampManager.getLastProcessedMessageTimeStamp()).isEqualTo(testMessage.getLastModifiedAt());
-        assertThat(messageProcessedManager.isMessageUnprocessed(testMessage)).isFalse();
     }
 
     @Test
     public void messageProcessor_withExistentPayment_updatesLastProcessedMessageTimeStamp() {
-        assertThat(messageProcessedManager.isMessageUnprocessed(testMessage)).isTrue();
 
         // return some payment on request
         when(client.executeBlocking(any())).thenReturn(mock(Payment.class));
@@ -87,6 +80,5 @@ public class MessageFilterTest {
         // when MessageFilter.process() returns null - timestamp is updated
         timeStampManager.persistLastProcessedMessageTimeStamp();
         assertThat(timeStampManager.getLastProcessedMessageTimeStamp()).isEqualTo(testMessage.getLastModifiedAt());
-        assertThat(messageProcessedManager.isMessageUnprocessed(testMessage)).isFalse();
     }
 }

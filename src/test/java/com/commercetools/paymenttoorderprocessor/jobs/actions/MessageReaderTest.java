@@ -1,6 +1,5 @@
 package com.commercetools.paymenttoorderprocessor.jobs.actions;
 
-import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
 import com.commercetools.paymenttoorderprocessor.dto.PaymentTransactionCreatedOrUpdatedMessage;
 import com.commercetools.paymenttoorderprocessor.testconfiguration.ExtendedTestConfiguration;
 import com.commercetools.paymenttoorderprocessor.testconfiguration.HttpClientMockConfiguration;
@@ -67,9 +66,6 @@ public class MessageReaderTest {
     private TimeStampManager timeStampManager;
 
     @Autowired
-    private MessageProcessedManager messageProcessedManager;
-
-    @Autowired
     private BlockingSphereClient client;
 
     @Test
@@ -113,7 +109,6 @@ public class MessageReaderTest {
     public void read_whenFirstPageIsEmpty_returnsResultFromSecondPage_AndPersistsTimestamp() {
         // mark results from the first page as processed
         List<PaymentTransactionCreatedOrUpdatedMessage> firstResults = firstMessagesResult.getResults();
-        firstResults.forEach(messageProcessedManager::setMessageIsProcessed);
 
         mock2PagesResult(client, messageReader);
 
@@ -141,9 +136,7 @@ public class MessageReaderTest {
         // mark one result from first and one from second page as processed
         List<PaymentTransactionCreatedOrUpdatedMessage> firstResults = firstMessagesResult.getResults();
         List<PaymentTransactionCreatedOrUpdatedMessage> secondResults = secondMessagesResult.getResults();
-        messageProcessedManager.setMessageIsProcessed(firstResults.get(0));
         PaymentTransactionCreatedOrUpdatedMessage lastMessage = secondResults.get(1);
-        messageProcessedManager.setMessageIsProcessed(lastMessage);
 
         mock2PagesResult(client, messageReader);
 
