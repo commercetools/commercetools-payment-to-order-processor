@@ -43,19 +43,19 @@ public class ReadMessagesJob {
     private StepBuilderFactory steps;
 
     @Bean
-    @DependsOn({"blockingSphereClient", "timeStampManager", "messageProcessedManager"})
+    @DependsOn({"blockingSphereClient", "timeStampManager"})
     public ItemReader<PaymentTransactionCreatedOrUpdatedMessage> reader() {
         return new MessageReader();
     }
 
     @Bean
-    @DependsOn({"blockingSphereClient", "paymentCreationConfigurationManager", "messageProcessedManager"})
+    @DependsOn({"blockingSphereClient", "paymentCreationConfigurationManager"})
     public ItemProcessor<PaymentTransactionCreatedOrUpdatedMessage, CartAndMessage> processor() {
         return new MessageFilter();
     }
 
     @Bean
-    @DependsOn({"httpClient", "messageProcessedManager"})
+    @DependsOn({"httpClient"})
     public ItemWriter<CartAndMessage> writer() {
         return new OrderCreator();
     }
