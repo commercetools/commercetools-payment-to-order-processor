@@ -73,8 +73,6 @@ public class MessageReader implements ItemReader<PaymentTransactionCreatedOrUpda
         return unprocessedMessagesQueue.poll();
     }
 
-
-    //Due to eventual consistency messages could be created with a delay. Fetching several minutes prior last Timestamp
     private MessageQuery buildQuery() {
 
         MessageQuery messageQuery = MessageQuery.of();
