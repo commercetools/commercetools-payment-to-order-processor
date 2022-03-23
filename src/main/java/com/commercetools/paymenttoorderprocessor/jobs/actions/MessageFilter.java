@@ -34,38 +34,32 @@ public class MessageFilter implements ItemProcessor<PaymentTransactionCreatedOrU
     @Autowired
     private PaymentCreationConfigurationManager paymentCreationConfigurationManager;
 
-    @Autowired
-    private TimeStampManager timeStampManager;
-
-    @Override
     public CartAndMessage process(PaymentTransactionCreatedOrUpdatedMessage message) {
         LOG.debug("Called MessageFilter.process with parameter {}", message);
         final Payment payment = getCorrespondingPayment(message);
-        if (payment != null) {
-            if (paymentCreationConfigurationManager.isTransactionSuccessAndHasMatchingTransactionTypes(message, payment)) {
-                final Optional<Cart> oCart = getCorrespondingCart(payment);
-                if (oCart.isPresent()) {
-                    final Cart cart = oCart.get();
-                    if (cart.getCartState() != CartState.ORDERED) {
-                        return new CartAndMessage(cart, message);
-                    } else {
-                        LOG.debug("Cart {} is already ordered nothing to do.", cart.getId());
-                    }
-                } else {
-                    LOG.error("There is no cart connected to payment with id {}.", message.getResource().getId());
-                }
-            } else {
-                LOG.debug("PaymentTransactionCreatedOrUpdatedMessage {} has incorrect transaction state to be processed.", message.getId());
-            }
-        } else {
+        if (payment == null) {
             LOG.error("There is no payment in commercetools platform with id {}.", message.getResource().getId());
+            return null;
         }
 
-        // we tried to do all possible jobs. If CartAndMessage is not returned above -
-        // don't try to process this message next time
-        timeStampManager.setActualProcessedMessageTimeStamp(message.getLastModifiedAt());
+        if (!paymentCreationConfigurationManager.isTransactionSuccessAndHasMatchingTransactionTypes(message, payment)) {
+            LOG.debug("PaymentTransactionCreatedOrUpdatedMessage {} has incorrect transaction state to be processed.", message.getId());
+            return null;
+        }
 
-        return null;
+        final Optional<Cart> oCart = getCorrespondingCart(payment);
+        if (!oCart.isPresent()) {
+            LOG.error("There is no cart connected to payment with id {}.", message.getResource().getId());
+            return null;
+        }
+
+        final Cart cart = oCart.get();
+        if (cart.getCartState() == CartState.ORDERED) {
+            LOG.debug("Cart {} is already ordered nothing to do.", cart.getId());
+            return null;
+        }
+
+        return new CartAndMessage(cart, message);
     }
 
     private Optional<Cart> getCorrespondingCart(final Payment payment) {
