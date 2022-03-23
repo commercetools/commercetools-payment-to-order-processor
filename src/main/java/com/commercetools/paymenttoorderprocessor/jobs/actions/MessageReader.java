@@ -35,20 +35,15 @@ import java.util.function.Consumer;
 
 public class MessageReader implements ItemReader<PaymentTransactionCreatedOrUpdatedMessage> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(MessageReader.class);
     private static final String PAYMENT_TRANSACTION_STATE_CHANGED = "PaymentTransactionStateChanged";
     private static final String PAYMENT_TRANSACTION_ADDED = "PaymentTransactionAdded";
-    final int RESULTS_PER_PAGE = 500;
-    final int PAGE_OVERLAP = 5;
-    private boolean unprocessedMessagesQueueFilled=false;
+    private boolean unprocessedMessagesQueueFilled = false;
     @Autowired
     private SphereClient client;
     @Autowired
     private TimeStampManager timeStampManager;
     @Autowired
     private MessageProcessedManager messageProcessedManager;
-    @Value("${ctp.messagereader.minutesoverlapping}")
-    private Integer minutesOverlapping;
     @Value("${ctp.messages.processtransactionaddedmessages:true}")
     private Boolean processPaymentTransactionAddedMessages;
     @Value("${ctp.messages.processtransactionstatechangedmessages:true}")
