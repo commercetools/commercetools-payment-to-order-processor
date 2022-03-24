@@ -61,16 +61,10 @@ public class MessageReader implements ItemReader<PaymentTransactionCreatedOrUpda
             MessageQuery query = buildQuery();
             Consumer<List<Message>> consumer = messages -> messages.stream()
                     .map(message -> message.as(PaymentTransactionCreatedOrUpdatedMessage.class))
-                    .forEach(message -> {
-                        if (messageProcessedManager.isMessageUnprocessed(message)) {
-                            unprocessedMessagesQueue.add(message);
-                        } else {
-                            timeStampManager.setActualProcessedMessageTimeStamp(message.getLastModifiedAt());
-                        }
-                    });
+                    .forEach(unprocessedMessagesQueue::add);
             CtpQueryUtils.queryAll(client, query, consumer).thenApply(result -> unprocessedMessagesQueueFilled = true).toCompletableFuture().join();
         }
-        return unprocessedMessagesQueue.poll();
+     return unprocessedMessagesQueue.poll();
     }
 
     private MessageQuery buildQuery() {
