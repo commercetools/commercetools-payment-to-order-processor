@@ -1,6 +1,5 @@
 package com.commercetools.paymenttoorderprocessor.jobs.actions;
 
-import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
 import com.commercetools.paymenttoorderprocessor.dto.PaymentTransactionCreatedOrUpdatedMessage;
 import com.commercetools.paymenttoorderprocessor.testconfiguration.ExtendedTestConfiguration;
 import com.commercetools.paymenttoorderprocessor.testconfiguration.HttpClientMockConfiguration;
@@ -32,7 +31,7 @@ import static org.mockito.Mockito.*;
                 MessageReaderTest.TestConfig.class, HttpClientMockConfiguration.class, ExtendedTestConfiguration.class
         },
         initializers = ConfigFileApplicationContextInitializer.class)
-// clean MessageReader and messageProcessedManager on every test
+// clean MessageReader on every test
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class MessageReaderTest {
 
@@ -65,9 +64,6 @@ public class MessageReaderTest {
 
     @Autowired
     private TimeStampManager timeStampManager;
-
-    @Autowired
-    private MessageProcessedManager messageProcessedManager;
 
     @Autowired
     private BlockingSphereClient client;
@@ -103,69 +99,10 @@ public class MessageReaderTest {
         // sphere client should be called only twice (first and empty result page)
         // even if we call messageReader.read 3 times, because both results are on the same page first page
         verify(client, times(2)).executeBlocking(any());
-
-        // no messages processed - last timestamp is not updated
-        timeStampManager.persistLastProcessedMessageTimeStamp();
-        assertThat(timeStampManager.getLastProcessedMessageTimeStamp()).isNull();
     }
 
     @Test
-    public void read_whenFirstPageIsEmpty_returnsResultFromSecondPage_AndPersistsTimestamp() {
-        // mark results from the first page as processed
-        List<PaymentTransactionCreatedOrUpdatedMessage> firstResults = firstMessagesResult.getResults();
-        firstResults.forEach(messageProcessedManager::setMessageIsProcessed);
-
-        mock2PagesResult(client, messageReader);
-
-        PaymentTransactionCreatedOrUpdatedMessage firstMessage = messageReader.read();
-        assertThat(firstMessage).isNotNull();
-        assertThat(firstMessage.getId()).isEqualTo("111");
-
-        PaymentTransactionCreatedOrUpdatedMessage secondMessage = messageReader.read();
-        assertThat(secondMessage).isNotNull();
-        assertThat(secondMessage.getId()).isEqualTo("444");
-
-        assertThat(messageReader.read()).isNull(); // empty queue after second page
-
-        // sphere client called 3 to fetch 2 filled and 1 empty pages
-        verify(client, times(3)).executeBlocking(any());
-
-        // verify last timestamp is equal to last processed message
-        PaymentTransactionCreatedOrUpdatedMessage lastResultOnFirstPage = firstResults.get(firstResults.size() - 1);
-        timeStampManager.persistLastProcessedMessageTimeStamp();
-        assertThat(timeStampManager.getLastProcessedMessageTimeStamp()).isEqualTo(lastResultOnFirstPage.getLastModifiedAt());
-    }
-
-    @Test
-    public void read_someResultsAreProcessedOnFirstAndSecondPage_returnsResultFromFirstAndSecondPage_AndPersistsTimestamp() {
-        // mark one result from first and one from second page as processed
-        List<PaymentTransactionCreatedOrUpdatedMessage> firstResults = firstMessagesResult.getResults();
-        List<PaymentTransactionCreatedOrUpdatedMessage> secondResults = secondMessagesResult.getResults();
-        messageProcessedManager.setMessageIsProcessed(firstResults.get(0));
-        PaymentTransactionCreatedOrUpdatedMessage lastMessage = secondResults.get(1);
-        messageProcessedManager.setMessageIsProcessed(lastMessage);
-
-        mock2PagesResult(client, messageReader);
-
-        PaymentTransactionCreatedOrUpdatedMessage firstMessage = messageReader.read();
-        assertThat(firstMessage).isNotNull();
-        assertThat(firstMessage.getId()).isEqualTo("44444444-4444-4444-4444-444444444444");
-
-        PaymentTransactionCreatedOrUpdatedMessage secondMessage = messageReader.read();
-        assertThat(secondMessage).isNotNull();
-        assertThat(secondMessage.getId()).isEqualTo("111");
-
-        assertThat(messageReader.read()).isNull(); // empty queue after second page
-
-        // sphere client called 3 to fetch 2 filled and 1 empty pages
-        verify(client, times(3)).executeBlocking(any());
-
-        // verify last timestamp is equal to last processed message
-        timeStampManager.persistLastProcessedMessageTimeStamp();
-        assertThat(timeStampManager.getLastProcessedMessageTimeStamp()).isEqualTo(lastMessage.getLastModifiedAt());
-    }
-
-    private void mock2PagesResult(final BlockingSphereClient client, final MessageReader messageReader) {
+    public void read_whenTwoPages_returnsFourMessagesFromBothPages() {
         when(client.executeBlocking(any(MessageQuery.class))).thenAnswer(a -> {
             MessageQuery query = a.getArgumentAt(0, MessageQuery.class);
             if (query.offset() == 0) {
@@ -176,5 +113,26 @@ public class MessageReaderTest {
                 return emptyMessagesResult;
             }
         });
+
+        PaymentTransactionCreatedOrUpdatedMessage firstMessage = messageReader.read();
+        assertThat(firstMessage).isNotNull();
+        assertThat(firstMessage.getId()).isEqualTo("11111111-1111-1111-1111-111111111111");
+
+        PaymentTransactionCreatedOrUpdatedMessage secondMessage = messageReader.read();
+        assertThat(secondMessage).isNotNull();
+        assertThat(secondMessage.getId()).isEqualTo("44444444-4444-4444-4444-444444444444");
+
+        PaymentTransactionCreatedOrUpdatedMessage thirdMessage = messageReader.read();
+        assertThat(thirdMessage).isNotNull();
+        assertThat(thirdMessage.getId()).isEqualTo("111");
+
+        PaymentTransactionCreatedOrUpdatedMessage fourthMessage = messageReader.read();
+        assertThat(fourthMessage).isNotNull();
+        assertThat(fourthMessage.getId()).isEqualTo("444");
+
+        assertThat(messageReader.read()).isNull(); // empty queue after second page
+
+        // sphere client called 3 to fetch 2 filled and 1 empty pages
+        verify(client, times(3)).executeBlocking(any());
     }
 }

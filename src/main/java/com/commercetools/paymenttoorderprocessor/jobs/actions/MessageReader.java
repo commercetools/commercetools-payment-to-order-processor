@@ -1,6 +1,5 @@
 package com.commercetools.paymenttoorderprocessor.jobs.actions;
 
-import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
 import com.commercetools.paymenttoorderprocessor.dto.PaymentTransactionCreatedOrUpdatedMessage;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
 import io.sphere.sdk.client.BlockingSphereClient;
@@ -36,9 +35,6 @@ public class MessageReader implements ItemReader<PaymentTransactionCreatedOrUpda
 
     @Autowired
     private TimeStampManager timeStampManager;
-
-    @Autowired
-    private MessageProcessedManager messageProcessedManager;
 
     private static final String PAYMENT_TRANSACTION_STATE_CHANGED = "PaymentTransactionStateChanged";
     private static final String PAYMENT_TRANSACTION_ADDED = "PaymentTransactionAdded";
@@ -104,11 +100,7 @@ public class MessageReader implements ItemReader<PaymentTransactionCreatedOrUpda
         result.getResults().stream()
                 .map(message -> message.as(PaymentTransactionCreatedOrUpdatedMessage.class))
                 .forEach(message -> {
-                    if (messageProcessedManager.isMessageUnprocessed(message)) {
-                        unprocessedMessagesQueue.add(message);
-                    } else {
-                        timeStampManager.setActualProcessedMessageTimeStamp(message.getLastModifiedAt());
-                    }
+                    unprocessedMessagesQueue.add(message);
                 });
 
         LOG.info("fetched messages [{}-{}] of total {}, {} of them are are unprocessed",

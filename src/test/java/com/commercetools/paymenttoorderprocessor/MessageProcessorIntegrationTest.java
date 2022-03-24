@@ -7,7 +7,6 @@ import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageFilter;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageReader;
 import com.commercetools.paymenttoorderprocessor.testconfiguration.BasicTestConfiguration;
 import com.commercetools.paymenttoorderprocessor.testconfiguration.ExtendedTestConfiguration;
-import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
 import com.commercetools.paymenttoorderprocessor.wrapper.CartAndMessage;
 import com.neovisionaries.i18n.CountryCode;
 import io.sphere.sdk.carts.Cart;
@@ -34,7 +33,6 @@ import org.springframework.boot.test.context.ConfigFileApplicationContextInitial
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 
@@ -57,11 +55,8 @@ public class MessageProcessorIntegrationTest extends IntegrationTest {
     @Autowired
     private BlockingSphereClient testClient;
 
-    @Autowired
-    private TimeStampManager timeStampManager;
-
     @Test
-    public void messageProcessorSuccess() throws Exception {
+    public void messageProcessorSuccess() {
         PaymentFixtures.withPayment(testClient, payment -> {
 
             //Preconditions: to create message in commercetools platform
@@ -91,9 +86,6 @@ public class MessageProcessorIntegrationTest extends IntegrationTest {
             } catch (InterruptedException e) {
             }
 
-            //final array so lambda can use it
-            final ZonedDateTime[] lastModifiedAt = new ZonedDateTime[1];
-
             //get the correct message to read
             assertEventually(() -> {
                 PaymentTransactionCreatedOrUpdatedMessage message = messageReader.read();
@@ -105,15 +97,7 @@ public class MessageProcessorIntegrationTest extends IntegrationTest {
                 final Cart cartToTest = cartAndMessage.getCart();
                 assertThat(cartToTest).isNotNull();
                 assertThat(cartToTest.getId()).isEqualTo(cartWithPayment.getId());
-
-                lastModifiedAt[0] = message.getLastModifiedAt();
             });
-
-            // timestamp is updated as we have processed 2 messages for the payment transaction:
-            // one for PaymentTransactionAdded - MessageFilter.process() returns null and timestamp is updated
-            // second for PaymentTransactionStatusUpdated - MessageFilter.process() returns CartAndMessage instance
-            timeStampManager.persistLastProcessedMessageTimeStamp();
-            assertThat(timeStampManager.getLastProcessedMessageTimeStamp()).isBeforeOrEqualTo(lastModifiedAt[0]);
 
             return paymentWithTransactionStateChange;
         });

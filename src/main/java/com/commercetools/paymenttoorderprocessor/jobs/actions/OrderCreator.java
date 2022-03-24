@@ -1,6 +1,5 @@
 package com.commercetools.paymenttoorderprocessor.jobs.actions;
 
-import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
 import com.commercetools.paymenttoorderprocessor.wrapper.CartAndMessage;
 import io.netty.handler.codec.http.QueryStringEncoder;
@@ -43,9 +42,6 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
      */
     @Value("${createorder.endpoint.authentication:#{null}}")
     private String authentication;
-
-    @Autowired
-    private MessageProcessedManager messageProcessedManager;
 
     @Autowired
     HttpClient httpClient;
@@ -115,8 +111,6 @@ public class OrderCreator implements ItemWriter<CartAndMessage> {
                                     + "Cart [{}] is not processed. Reason: {} ",
                             httpResponse.getStatusCode(), cartAndMessage.getCart().getId(), responseBodyToLog);
                 }
-
-                messageProcessedManager.setMessageIsProcessed(cartAndMessage.getMessage());
             } else {
                 // request is not successful: should be re-tried later
                 timeStampManager.processingMessageFailed();
