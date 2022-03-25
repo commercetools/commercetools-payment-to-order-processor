@@ -1,20 +1,17 @@
 package com.commercetools.paymenttoorderprocessor.testconfiguration;
 
-import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageFilter;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.MessageReader;
 import com.commercetools.paymenttoorderprocessor.jobs.actions.OrderCreator;
 import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager.PaymentCreationConfigurationManager;
 import com.commercetools.paymenttoorderprocessor.paymentcreationconfigurationmanager.PaymentCreationConfigurationManagerImpl;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
-import io.sphere.sdk.messages.Message;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 
 @Configuration
 public class ExtendedTestConfiguration {
@@ -50,27 +47,6 @@ public class ExtendedTestConfiguration {
             @Override
             public void processingMessageFailed() {
                 processingMessageFailed = true;
-            }
-        };
-    }
-
-    /**
-     * Simulate "processed" message status by message ID saving.
-     */
-    @Bean
-    public MessageProcessedManager messageProcessedManager() {
-        return new MessageProcessedManager() {
-
-            private HashSet<String> processedMessages = new HashSet<>();
-
-            @Override
-            public void setMessageIsProcessed(Message message) {
-                processedMessages.add(message.getId());
-            }
-
-            @Override
-            public boolean isMessageUnprocessed(Message message) {
-                return !processedMessages.contains(message.getId());
             }
         };
     }

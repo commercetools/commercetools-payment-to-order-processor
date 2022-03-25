@@ -1,7 +1,6 @@
 package com.commercetools.paymenttoorderprocessor.jobs.actions;
 
 import com.commercetools.paymenttoorderprocessor.ShereClientConfiguration;
-import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
 import com.commercetools.paymenttoorderprocessor.fixtures.PaymentFixtures;
 import com.commercetools.paymenttoorderprocessor.helper.CartAndMessageCreateHelper;
 import com.commercetools.paymenttoorderprocessor.testconfiguration.BasicTestConfiguration;
@@ -37,9 +36,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class OrderCreatorIntegrationTest {
 
     @Autowired
-    private MessageProcessedManager messageProcessedManager;
-
-    @Autowired
     private TimeStampManager timeStampManager;
 
     @Autowired
@@ -60,9 +56,7 @@ public class OrderCreatorIntegrationTest {
             CartAndMessage cartAndMessage1 = cartAndMessageCreateHelper.createCartAndMessage(payment);
 
             httpClientMock.spyStatusCode(HttpStatusCode.CREATED_201);
-            assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage1.getMessage())).isTrue();
             orderCreator.write(Collections.singletonList(cartAndMessage1));
-            assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage1.getMessage())).isFalse();
 
             // timestamp should be updated, because all operations were successful
             timeStampManager.setActualProcessedMessageTimeStamp(cartAndMessage1.getMessage().getLastModifiedAt());
@@ -82,9 +76,7 @@ public class OrderCreatorIntegrationTest {
             CartAndMessage cartAndMessage2 = cartAndMessageCreateHelper.createCartAndMessage(payment);
 
             httpClientMock.spyStatusCode(HttpStatusCode.OK_200);
-            assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage2.getMessage())).isTrue();
             orderCreator.write(Collections.singletonList(cartAndMessage2));
-            assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage2.getMessage())).isFalse();
 
             // timestamp should be updated, because result is 200
             timeStampManager.setActualProcessedMessageTimeStamp(cartAndMessage2.getMessage().getLastModifiedAt());
@@ -106,43 +98,27 @@ public class OrderCreatorIntegrationTest {
             timeStampManager.setActualProcessedMessageTimeStamp(cartAndMessage3.getMessage().getLastModifiedAt());
 
             httpClientMock.spyResponse(HttpStatusCode.BAD_REQUEST_400, "Test 400 bad response");
-            assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage3.getMessage())).isTrue();
             orderCreator.write(Collections.singletonList(cartAndMessage3));
-            assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage3.getMessage()))
-                    .withFailMessage("Message should not be marked as processed")
-                    .isTrue();
 
             timeStampManager.setActualProcessedMessageTimeStamp(ZonedDateTime.now());
             persistAndAssertTimestampEquals(cartAndMessage3.getMessage().getLastModifiedAt());
 
             httpClientMock.spyResponse(HttpStatusCode.FORBIDDEN_403, "Test 403 bad response");
-            assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage3.getMessage())).isTrue();
             orderCreator.write(Collections.singletonList(cartAndMessage3));
-            assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage3.getMessage()))
-                    .withFailMessage("Message should not be marked as processed")
-                    .isTrue();
 
             // timestamp is not changeable any more, since above we had an error
             timeStampManager.setActualProcessedMessageTimeStamp(ZonedDateTime.now());
             persistAndAssertTimestampEquals(cartAndMessage3.getMessage().getLastModifiedAt());
 
             httpClientMock.spyResponse(HttpStatusCode.BAD_GATEWAY_502, "Test 502 response");
-            assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage3.getMessage())).isTrue();
             orderCreator.write(Collections.singletonList(cartAndMessage3));
-            assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage3.getMessage()))
-                    .withFailMessage("Message should not be marked as processed")
-                    .isTrue();
 
             // timestamp is not changeable any more, since above we had an error
             timeStampManager.setActualProcessedMessageTimeStamp(ZonedDateTime.now());
             persistAndAssertTimestampEquals(cartAndMessage3.getMessage().getLastModifiedAt());
 
             httpClientMock.spyResponse(HttpStatusCode.CREATED_201);
-            assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage3.getMessage())).isTrue();
             orderCreator.write(Collections.singletonList(cartAndMessage3));
-            assertThat(messageProcessedManager.isMessageUnprocessed(cartAndMessage3.getMessage()))
-                    .withFailMessage("Message should be marked as processed")
-                    .isFalse();
 
             // even if the last operation is success - timestamp should not be untouched,
             // because previous operations failed

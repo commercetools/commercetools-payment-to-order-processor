@@ -1,6 +1,5 @@
 package com.commercetools.paymenttoorderprocessor.jobs.actions;
 
-import com.commercetools.paymenttoorderprocessor.customobjects.MessageProcessedManager;
 import com.commercetools.paymenttoorderprocessor.dto.PaymentTransactionCreatedOrUpdatedMessage;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
 import com.commercetools.paymenttoorderprocessor.utils.CtpQueryUtils;
@@ -37,15 +36,20 @@ public class MessageReader implements ItemReader<PaymentTransactionCreatedOrUpda
 
     private static final String PAYMENT_TRANSACTION_STATE_CHANGED = "PaymentTransactionStateChanged";
     private static final String PAYMENT_TRANSACTION_ADDED = "PaymentTransactionAdded";
+    final int RESULTS_PER_PAGE = 500;
     private boolean unprocessedMessagesQueueFilled = false;
     @Autowired
     private SphereClient client;
     @Autowired
     private TimeStampManager timeStampManager;
-    @Autowired
-    private MessageProcessedManager messageProcessedManager;
     @Value("${ctp.messages.processtransactionaddedmessages:true}")
     private Boolean processPaymentTransactionAddedMessages;
+
+
+    @Value("${ctp.messagereader.minutesoverlapping}")
+    private Integer minutesOverlapping;
+
+
     @Value("${ctp.messages.processtransactionstatechangedmessages:true}")
     private Boolean processPaymentTransactionStateChangedMessages;
     @Nonnull
@@ -57,14 +61,16 @@ public class MessageReader implements ItemReader<PaymentTransactionCreatedOrUpda
     @Override
     @Nullable
     public PaymentTransactionCreatedOrUpdatedMessage read() {
+
         if (!unprocessedMessagesQueueFilled) {
             MessageQuery query = buildQuery();
             Consumer<List<Message>> consumer = messages -> messages.stream()
                     .map(message -> message.as(PaymentTransactionCreatedOrUpdatedMessage.class))
                     .forEach(unprocessedMessagesQueue::add);
-            CtpQueryUtils.queryAll(client, query, consumer).thenApply(result -> unprocessedMessagesQueueFilled = true).toCompletableFuture().join();
+            CtpQueryUtils.queryAll(client, query, consumer, RESULTS_PER_PAGE).thenApply(result -> unprocessedMessagesQueueFilled =
+                    true).toCompletableFuture().join();
         }
-     return unprocessedMessagesQueue.poll();
+        return unprocessedMessagesQueue.poll();
     }
 
     private MessageQuery buildQuery() {
