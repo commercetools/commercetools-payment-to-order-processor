@@ -2,7 +2,11 @@ package com.commercetools.paymenttoorderprocessor.jobs.actions;
 
 import com.commercetools.paymenttoorderprocessor.dto.PaymentTransactionCreatedOrUpdatedMessage;
 import com.commercetools.paymenttoorderprocessor.timestamp.TimeStampManager;
+import com.commercetools.paymenttoorderprocessor.utils.CtpQueryUtils;
+import io.sphere.sdk.carts.Cart;
+import io.sphere.sdk.carts.queries.CartQuery;
 import io.sphere.sdk.client.BlockingSphereClient;
+import io.sphere.sdk.client.SphereClient;
 import io.sphere.sdk.messages.Message;
 import io.sphere.sdk.messages.queries.MessageQuery;
 import io.sphere.sdk.queries.PagedQueryResult;
@@ -17,7 +21,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.time.ZonedDateTime;
 import java.util.ArrayDeque;
+import java.util.List;
 import java.util.Queue;
+import java.util.function.Consumer;
 
 /**
  * Reads PaymentTransactionStateChangedMessages from the commercetools platform.
@@ -28,34 +34,26 @@ import java.util.Queue;
 
 public class MessageReader implements ItemReader<PaymentTransactionCreatedOrUpdatedMessage> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(MessageReader.class);
-
-    @Autowired
-    private BlockingSphereClient client;
-
-    @Autowired
-    private TimeStampManager timeStampManager;
-
     private static final String PAYMENT_TRANSACTION_STATE_CHANGED = "PaymentTransactionStateChanged";
     private static final String PAYMENT_TRANSACTION_ADDED = "PaymentTransactionAdded";
+    final int RESULTS_PER_PAGE = 500;
+    private boolean unprocessedMessagesQueueFilled = false;
+    @Autowired
+    private SphereClient client;
+    @Autowired
+    private TimeStampManager timeStampManager;
+    @Value("${ctp.messages.processtransactionaddedmessages:true}")
+    private Boolean processPaymentTransactionAddedMessages;
+
 
     @Value("${ctp.messagereader.minutesoverlapping}")
     private Integer minutesOverlapping;
 
-    @Value("${ctp.messages.processtransactionaddedmessages:true}")
-    private Boolean processPaymentTransactionAddedMessages;
 
     @Value("${ctp.messages.processtransactionstatechangedmessages:true}")
     private Boolean processPaymentTransactionStateChangedMessages;
-
     @Nonnull
-    private Queue<PaymentTransactionCreatedOrUpdatedMessage> unprocessedMessagesQueue = new ArrayDeque<>();
-
-    private boolean wasInitialQueried = false;
-    private long total;
-    private long offset = 0L;
-    final int RESULTS_PER_PAGE = 500;
-    final int PAGE_OVERLAP = 5;
+    private final Queue<PaymentTransactionCreatedOrUpdatedMessage> unprocessedMessagesQueue = new ArrayDeque<>();
 
     /**
      * @return the oldest unprocessed message from the queue, or <b>null</b> if no new messages to process in CTP.
@@ -63,81 +61,26 @@ public class MessageReader implements ItemReader<PaymentTransactionCreatedOrUpda
     @Override
     @Nullable
     public PaymentTransactionCreatedOrUpdatedMessage read() {
-        LOG.debug("wasInitialQueried: {}", wasInitialQueried);
 
-        while (isQueryNeeded()) {
-            fetchUnprocessedMessagesFromPlatform();
+        if (!unprocessedMessagesQueueFilled) {
+            MessageQuery query = buildQuery();
+            Consumer<List<Message>> consumer = messages -> messages.stream()
+                    .map(message -> message.as(PaymentTransactionCreatedOrUpdatedMessage.class))
+                    .forEach(unprocessedMessagesQueue::add);
+            CtpQueryUtils.queryAll(client, query, consumer, RESULTS_PER_PAGE).thenApply(result -> unprocessedMessagesQueueFilled =
+                    true).toCompletableFuture().join();
         }
-
-        return getUnprocessedMessageFromQueue();
-    }
-
-    /**
-     * @return oldest unprocessed message from the queue if exists, or <b>null</b>
-     */
-    @Nullable
-    private PaymentTransactionCreatedOrUpdatedMessage getUnprocessedMessageFromQueue() {
         return unprocessedMessagesQueue.poll();
     }
 
-    /**
-     * A first or next CTP query is needed if we don't have unprocessed messages in the queue.
-     *
-     * @return <b>true</b> if messages queue never fetched or {@code unprocessedMessagesQueue} is empty and CTP still
-     * has items to fetch (query next page).
-     */
-    private boolean isQueryNeeded() {
-        return !wasInitialQueried || (unprocessedMessagesQueue.isEmpty() && total > offset);
-    }
-
-    /**
-     * Fetch messages from the platform and put all unprocessed messages to {@code unprocessedMessagesQueue}.
-     * Also, update {@link TimeStampManager#setActualProcessedMessageTimeStamp(java.time.ZonedDateTime)
-     * actualProcessedMessageTimeStamp} for processed messages.
-     */
-    private void fetchUnprocessedMessagesFromPlatform() {
-        final PagedQueryResult<Message> result = queryPlatform();
-        result.getResults().stream()
-                .map(message -> message.as(PaymentTransactionCreatedOrUpdatedMessage.class))
-                .forEach(message -> {
-                    unprocessedMessagesQueue.add(message);
-                });
-
-        LOG.info("fetched messages [{}-{}] of total {}, {} of them are are unprocessed",
-                result.getOffset() + 1, result.getOffset() + result.getCount(), result.getTotal(), unprocessedMessagesQueue.size());
-    }
-
-    private PagedQueryResult<Message> queryPlatform() {
-        LOG.debug("Query CTP for Messages");
-        final MessageQuery messageQuery = buildQuery();
-        final PagedQueryResult<Message> result = client.executeBlocking(messageQuery);
-        //Get the total workload from first Query
-        if (!wasInitialQueried) {
-            total = result.getTotal();
-            LOG.debug("First Query returned {} results.", total);
-        }
-        //Due to nondeterministic ordering of messages with same timestamp we fetch next pages with overlap
-        offset = result.getOffset() + RESULTS_PER_PAGE - PAGE_OVERLAP;
-        wasInitialQueried = true;
-        return result;
-    }
-
-
-    //Due to eventual consistency messages could be created with a delay. Fetching several minutes prior last Timestamp
     private MessageQuery buildQuery() {
 
-        MessageQuery messageQuery = MessageQuery.of()
-                .withSort(m -> m.lastModifiedAt().sort().asc())
-                .withOffset(offset)
-                .withLimit(RESULTS_PER_PAGE);
-
+        MessageQuery messageQuery = MessageQuery.of();
         final ZonedDateTime timestamp = timeStampManager.getLastProcessedMessageTimeStamp();
-
         if (timestamp != null) {
             messageQuery = messageQuery.plusPredicates(
-                    m -> m.lastModifiedAt().isGreaterThan(timestamp.minusMinutes(minutesOverlapping)));
+                    m -> m.lastModifiedAt().isGreaterThan(timestamp));
         }
-
         messageQuery = messageQuery.plusPredicates(m -> {
             QueryPredicate<Message> predicate = null;
             if (processPaymentTransactionAddedMessages) {

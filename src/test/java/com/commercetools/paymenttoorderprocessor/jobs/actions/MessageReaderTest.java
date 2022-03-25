@@ -21,6 +21,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.util.List;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -70,23 +71,17 @@ public class MessageReaderTest {
 
     @Test
     public void read_whenEmpty_returnsNull() {
-
-        when(client.executeBlocking(any())).thenReturn(emptyMessagesResult);
-
+        when(client.execute(any())).thenReturn(completedFuture(emptyMessagesResult));
         assertThat(messageReader.read()).isNull();
     }
 
     @Test
     public void read_whenOnePage_returnsResultFromThePage() {
-        when(client.executeBlocking(any())).thenAnswer(a -> {
-            MessageQuery query = a.getArgumentAt(0, MessageQuery.class);
-            if (query.offset() == 0) {
-                return firstMessagesResult;
-            } else {
-                return emptyMessagesResult;
-            }
+        when(client.execute(any())).thenAnswer(a -> {
+            return completedFuture(firstMessagesResult);
         });
-        PaymentTransactionCreatedOrUpdatedMessage firstUnprocessedMessage = messageReader.read();
+
+    PaymentTransactionCreatedOrUpdatedMessage firstUnprocessedMessage = messageReader.read();
         assertThat(firstUnprocessedMessage).isNotNull();
         assertThat(firstUnprocessedMessage.getId()).isEqualTo("11111111-1111-1111-1111-111111111111");
 
@@ -96,23 +91,16 @@ public class MessageReaderTest {
 
         assertThat(messageReader.read()).isNull(); // empty queue after first page
 
-        // sphere client should be called only twice (first and empty result page)
-        // even if we call messageReader.read 3 times, because both results are on the same page first page
-        verify(client, times(2)).executeBlocking(any());
+
+        verify(client, times(1)).execute(any());
     }
 
     @Test
     public void read_whenTwoPages_returnsFourMessagesFromBothPages() {
-        when(client.executeBlocking(any(MessageQuery.class))).thenAnswer(a -> {
-            MessageQuery query = a.getArgumentAt(0, MessageQuery.class);
-            if (query.offset() == 0) {
-                return firstMessagesResult;
-            } else if (query.offset() <= (messageReader.RESULTS_PER_PAGE - messageReader.PAGE_OVERLAP)) {
-                return secondMessagesResult;
-            } else {
-                return emptyMessagesResult;
-            }
+       when(client.execute(any())).thenAnswer(a -> {
+            return completedFuture(secondMessagesResult);
         });
+
 
         PaymentTransactionCreatedOrUpdatedMessage firstMessage = messageReader.read();
         assertThat(firstMessage).isNotNull();
@@ -133,6 +121,6 @@ public class MessageReaderTest {
         assertThat(messageReader.read()).isNull(); // empty queue after second page
 
         // sphere client called 3 to fetch 2 filled and 1 empty pages
-        verify(client, times(3)).executeBlocking(any());
+        verify(client, times(1)).execute(any());
     }
 }
