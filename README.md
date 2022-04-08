@@ -1,6 +1,7 @@
 # commercetools-payment-to-order-processor Service
 
-![Build Status](https://travis-ci.com/commercetools/commercetools-payment-to-order-processor.svg?branch=master)
+[![CD](https://github.com/commercetools/commercetools-payment-to-order-processor/actions/workflows/cd.yml/badge.svg)](https://github.com/commercetools/commercetools-payment-to-order-processor/actions/workflows/cd.yml)
+[![CI](https://github.com/commercetools/commercetools-payment-to-order-processor/actions/workflows/ci.yml/badge.svg)](https://github.com/commercetools/commercetools-payment-to-order-processor/actions/workflows/ci.yml)
 [![Docker Pulls](https://img.shields.io/docker/pulls/commercetools/payment-to-order-processor)](https://hub.docker.com/r/commercetools/payment-to-order-processor)
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -152,5 +153,5 @@ Additionally to simplify build:
  ```bash
  git tag -a v1.0.1 -m "Minor text adjustments."
  ```
- 
-- via [Github UI](https://github.com/commercetools/commercetools-email-retry-processor/releases)
+
+- via [Github UI](https://github.com/commercetools/commercetools-payment-to-order-processor/releases
