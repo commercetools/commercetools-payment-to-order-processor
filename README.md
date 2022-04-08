@@ -9,15 +9,16 @@
   - [Goal of the service](#goal-of-the-service)
   - [Creating the order](#creating-the-order)
   - [Using this service](#using-this-service)
+    - [Configure first processed message time bound](#configure-first-processed-message-time-bound)
   - [Congfiguration values](#congfiguration-values)
-    - [Required values](#required-values)
-    - [Optional values](#optional-values)
+    - [Required](#required)
+    - [Optional](#optional)
 - [Build and release](#build-and-release)
   - [Build](#build)
+  - [Configuration values for tests](#configuration-values-for-tests)
   - [Run tests](#run-tests)
-  - [Travis build settings](#travis-build-settings)
   - [Local run and debug](#local-run-and-debug)
-  - [Docker image](#docker-image)
+  - [Build and deploy](#build-and-deploy)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -25,12 +26,12 @@
 In general orders are created from carts by the frontend. For redirect payments like Credit card 3D Secure, Paypal or Sofortüberweisung shop front end is confronted with an issue that in some cases there is a valid payment but no order as user did not reach front end's success URL, which creates an order from current cart. One of the use cases would be lost internet connection or accidentally closed tab after successfully issued payment. Scheduled processor ensures that for every successful payment and valid cart an order can be still asynchronously created. More details on the process can be found [here](https://github.com/commercetools/commercetools-payment-to-order-processor/blob/master/doc/REQUIREMENTS.MD)
 
 The service polls `PaymentTransactionStateChanged` and `PaymentTransactionAdded` messages from the commercetools platform since the `lastProcessedMessageTimeStamp` stored in a custom object in the platform.
-If the PaymentTransaction type matches the configured values and the total price of the cart equals the amount of the transaction and is not already ordered then the service has to trigger order creation.
+If the PaymentTransaction type matches the configured values and the cart is not already ordered then the service has to trigger order creation.
 
 ## Creating the order
 This service does not create orders itself, because that would result in duplicated implementation of order 
-creation: In the shop code base and in this service. Therefore, it just calls, over `HTTP GET`, a configured URL 
-(i.e.: shop front end) with the encrypted cart ID as parameter "encryptedCartId". The encryption algorithm is `Blowfish` with `Base64` String encoding.
+creation: in the shop code base and in this service. Therefore, it just calls, over `HTTP GET`, a configured URL 
+(i.e.: shop front end) with the cart ID as parameter "cartId".
 
 ## Using this service
 Just start the docker container with required configuration (environment) variables set.
@@ -62,45 +63,39 @@ In the example below we want to start messages processing from _Friday, April 6,
 ```
 
 ## Congfiguration values
-### Required values
 
-* Credentials for the commercetools platform
-* Encryption Key and URL used for order creation API (***Handle your credentials and the encryption key with care.***)
+### Required
+| Name | Description | Default value |
+| --- | --- | --- |
+| CTP_CREDENTIALS_CLIENTID | OAuth 2.0 `client_id` and can be used to obtain a token. |  |
+| CTP_CREDENTIALS_CLIENTSECRET | OAuth 2.0 `client_secret` and can be used to obtain a token.	 | |
+| CTP_CREDENTIALS_PROJECTKEY | commercetools project key | |
+| CREATEORDER_ENDPOINT_URL | URL used for order creation API | |
 
-Example part of a shell script:
-```
-export CTP_CREDENTIALS_CLIENTID=...
-export CTP_CREDENTIALS_CLIENTSECRET=...
-export CTP_CREDENTIALS_PROJECTKEY=...
-export CREATEORDER_ENCRYPTION_SECRET=YOUR_SECRET_ENCRYPTION_KEY
-export CREATEORDER_ENDPOINT_URL=https://localhost/createOrder
-```
-
-### Optional values
-
-* Comma seperated list -> on which paymenttransactions will be an order created.
-* timeout for requests to the platform
-* the time overlap prior to lastproccessed timestamp -> to eliminate problems at edge cases
-* the container for the custom object (saving the timestamp)
-* basic HTTP authentication for create order API endpoint
-* if true, messages with type `PaymentTransactionAdded` will be processed (default: `true`)
-* if true, messages with type `PaymentTransactionStateChanged` will be processed (default: `true`)
-
-Example part of a shell script:
-```
-export CREATEORDER_CREATEORDERON=AUTHORIZATION,CHARGE
-export CTP_TIMEOUT=30000
-export CTP_MESSAGEREADER_MINUTESOVERLAPPING=2
-export CTP_CUSTOM_OBJECT_CONTAINERNAME=commercetools-payment-to-order-processor
-export CREATEORDER_ENDPOINT_AUTHENTICATION=<username>:<password>
-export CTP_MESSAGES_PROCESSTRANSACTIONADDEDMESSAGES=true
-export CTP_MESSAGES_PROCESSTRANSACTIONSTATECHANGEDMESSAGES=true
-```
+### Optional
+| Name | Description | Default value |
+| --- | --- | --- |
+| CREATEORDER_CREATEORDERON | Comma separated list of payment status, on which an order will be created. | `AUTHORIZATION,CHARGE` |
+| CTP_CREATEORDERAPI_TIMEOUT | Milliseconds to wait for create order API response | 40000 |
+| CREATEORDER_RESPONSE_LOGGINGLENGTHLIMIT | Max number of character to log from API response body. | 500
+| CTP_TIMEOUT | Timeout for requests to CTP in ms | 30000 | 
+| CTP_MESSAGEREADER_MINUTESOVERLAPPING | The time overlap prior to last proccessed timestamp in minute. The goal is to eliminate problems at edge cases caused by eventual consistency. | 2 | 
+| CTP_CUSTOM_OBJECT_CONTAINERNAME | The container name for the custom object containing the processed message IDs | `commercetools-payment-to-order-processor` | 
+| CREATEORDER_ENDPOINT_AUTHENTICATION | Basic HTTP authentication for create order API endpoint. | | 
+| CTP_MESSAGES_PROCESSTRANSACTIONADDEDMESSAGES | If true, messages with type `PaymentTransactionAdded` will be processed | true | 
+| CTP_MESSAGES_PROCESSTRANSACTIONSTATECHANGEDMESSAGES | If true, messages with type `PaymentTransactionStateChanged` will be processed | true |
 
 # Build and release
 
 ## Build
 For build `maven` tool is used. `mvn verify` usually is enough for final build, installing may be skipped.
+
+## Configuration values for tests
+| Name | Description | Required | Default value |
+| --- | --- | --- | --- |
+| IT_PROJECT_KEY | OAuth 2.0 `client_id` and can be used to obtain a token. | YES | |
+| IT_CLIENT_ID | OAuth 2.0 `client_secret` and can be used to obtain a token.	 | YES ||
+| IT_CLIENT_SECRET | commercetools project key | YES ||
 
 ## Run tests
 The Integration Test needs credentials for the platform that are provided via OS env variables. 
@@ -158,5 +153,5 @@ Additionally to simplify build:
  ```bash
  git tag -a v1.0.1 -m "Minor text adjustments."
  ```
- 
-- via [Github UI](https://github.com/commercetools/commercetools-payment-to-order-processor/releases)
+
+- via [Github UI](https://github.com/commercetools/commercetools-payment-to-order-processor/releases

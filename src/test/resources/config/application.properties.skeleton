@@ -21,6 +21,5 @@ createorder.createorderon=AUTHORIZATION,CHARGE
 
 spring.main.banner-mode=off
 
-createorder.encryption.secret=aaaaaaaaaaaaaaaa
 createorder.endpoint.url=http://test.host/API/createOrder
 
