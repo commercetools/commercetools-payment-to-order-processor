@@ -8,18 +8,18 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>1.5.10.RELEASE</version>
+        <version>1.5.22.RELEASE</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <java.version>1.8</java.version>
+        <java.version>11</java.version>
         <logStashLogbackEncoder.version>6.6</logStashLogbackEncoder.version>
-     <logback-json-classic.version>1.2.4-groovyless</logback-json-classic.version>
-        <jul-to-slf4.version>1.7.32</jul-to-slf4.version>
-        <commercetools-jvm-sdk.version>2.0.0</commercetools-jvm-sdk.version>
+        <logback-json-classic.version>1.2.11</logback-json-classic.version>
+        <jul-to-slf4.version>1.7.36</jul-to-slf4.version>
+        <commercetools-jvm-sdk.version>2.9.0</commercetools-jvm-sdk.version>
     </properties>
 
     <packaging>jar</packaging>
@@ -71,7 +71,7 @@
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
-            <version>1.14</version>
+            <version>1.15</version>
         </dependency>
         <!--logging-->
         <dependency>
@@ -98,7 +98,7 @@
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-model</artifactId>
-            <version>3.3.9</version>
+            <version>3.8.6</version>
         </dependency>
 
         <!-- Compile time validation -->
@@ -118,7 +118,7 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>3.19.0</version>
+            <version>3.23.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
